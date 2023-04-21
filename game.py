@@ -1,5 +1,8 @@
 import unittest
 
+# Importation d'un niveau
+level_path = "/Users/ambrericouard/Desktop/boulder_dash/level_test.txt"
+
 class Piece:
     def __init__(self, x, y, id):
         self.x = x
@@ -46,11 +49,11 @@ class Empty:
 
 
 class Board:
-    def __init__(self, width, height):
+    def __init__(self, width, height, level_path):
         self.width = width
         self.height = height
-        self.grid = [[Empty(x, y) for y in range(height)] for x in range(width)]  # initialiser le plateau avec des espaces vides
-        self.player = Player(0, 0)  # initialiser le joueur en haut à gauche
+        self.grid = self.create_grid(level_path)
+        self.player = Player(self.get_player_coord()[0], self.get_player_coord()[1])  # initialiser le joueur en haut à gauche
 
     def update(self):
         # Mettre à jour la position des pièces soumises à la gravité
@@ -58,6 +61,23 @@ class Board:
             for x in range(self.width):
                 if isinstance(self.grid[x][y], Falling):
                     self.move_falling_piece(x, y)
+
+    def create_grid(self, level_path):
+        with open(level_path, "r") as f:
+            return [list(line.strip()) for line in f.readlines()]
+
+    def get_player_coord(self):
+        x_coord, y_coord = 0, 0
+        nb_lignes, nb_colonnes = len(self.grid), len(self.grid[0])
+        size_x, size_y = self.width / nb_colonnes, self.height / nb_lignes
+        for y in range(nb_colonnes):
+            for x in range(nb_lignes):
+                if self.grid[x][y] == '@':
+                    return x_coord, y_coord  # position initiale du joueur
+                y_coord += size_y
+            x_coord += size_x
+            y_coord = 0
+        return 0, 0
 
     def move_falling_piece(self, x, y):
         # Vérifier si la pièce peut tomber d'un cran
@@ -145,7 +165,7 @@ class Board:
 
 class TestBoard(unittest.TestCase):
     def setUp(self):
-        self.board = Board(5, 5)
+        self.board = Board(5, 5, level_path)
         self.board.grid[1][1] = Piece(1, 1, 1)
         self.board.grid[3][3] = Piece(3, 3, 2)
 
