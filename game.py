@@ -52,7 +52,8 @@ class Board:
     def __init__(self, width, height, level_path):
         self.width = width
         self.height = height
-        self.grid = self.create_grid(level_path)
+        self.level_path = level_path
+        self.grid = self.create_grid()
         self.player = Player(self.get_player_coord()[0], self.get_player_coord()[1])  # initialiser le joueur en haut à gauche
 
     def update(self):
@@ -62,8 +63,8 @@ class Board:
                 if isinstance(self.grid[x][y], Falling):
                     self.move_falling_piece(x, y)
 
-    def create_grid(self, level_path):
-        with open(level_path, "r") as f:
+    def create_grid(self):
+        with open(self.level_path, "r") as f:
             return [list(line.strip()) for line in f.readlines()]
 
     def get_player_coord(self):

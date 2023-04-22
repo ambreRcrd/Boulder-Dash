@@ -14,14 +14,14 @@ screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("BOULDER DASH")
 
 # Affichez un fond d'écran blanc
-screen.fill((150, 150, 150))
+background_color = (150, 150, 150)
+screen.fill(background_color)
 
 # Importation d'un niveau
 level_path = "/Users/ambrericouard/Desktop/boulder_dash/level_test.txt"
-
-with open(level_path, "r") as f:
-    grid = np.array([list(line.strip()) for line in f.readlines()])
-print(grid)
+board = Board(screen_width, screen_height, level_path)
+grid = board.create_grid()
+print(np.array(grid))
 
 # Chargement des images
 player = pygame.image.load('/Users/ambrericouard/Desktop/boulder_dash/bonhomme.png') # joueur
@@ -59,6 +59,7 @@ for y in range(nb_colonnes):
             screen.blit(symbol_correspondings[icone], (x_coord,y_coord))
         if icone == '@':
             player_x, player_y = x_coord, y_coord # position initiale du joueur
+            i_player_x, i_player_y = y, x
         y_coord += size_y
     x_coord += size_x
     y_coord = 0
@@ -67,41 +68,53 @@ for y in range(nb_colonnes):
 pygame.display.update()
 
 # Vitesse de déplacement du personnage
-player_speed = 1
+old_player_x, old_player_y = player_x, player_y
+i_old_player_x, i_old_player_y = i_player_x, i_player_y
 
 # Boucle principale du jeu
 running = True
 while running:
+    Board(screen_width, screen_height, level_path)
     # Gestion des événements
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-    Board(screen_width, screen_height, level_path)
+        elif event.type == pygame.KEYDOWN:
+            # Détection des touches enfoncées
+            if event.key == pygame.K_LEFT:
+                if grid[i_player_y][i_player_x-1] != 'w':
+                    player_x = old_player_x - size_x
+                    i_player_x = i_old_player_x - 1
+            elif event.key == pygame.K_RIGHT:
+                if grid[i_player_y][i_player_x + 1] != 'w':
+                    player_x = old_player_x + size_x
+                    i_player_x = i_old_player_x + 1
+            elif event.key == pygame.K_UP:
+                if grid[i_player_y - 1][i_player_x] != 'w':
+                    player_y = old_player_y - size_y
+                    i_player_y = i_old_player_y - 1
+            elif event.key == pygame.K_DOWN:
+                if grid[i_player_y + 1][i_player_x] != 'w':
+                    player_y = old_player_y + size_y
+                    i_player_y = i_old_player_y + 1
 
-    # Détection des touches enfoncées
-    keys = pygame.key.get_pressed()
+            grid[i_old_player_y][i_old_player_x] = ' '
+            grid[i_player_y][i_player_x] = '@'
+            print(np.array(grid))
 
-    old_player_x, old_player_y = player_x, player_y
+        screen.fill(background_color, (old_player_x, old_player_y, player.get_width(), player.get_height())) # Supprime le joueur de son ancienne position
+        screen.fill(background_color, (player_x, player_y, player.get_width(), player.get_height())) # Supprimer les icônes situées à la nouvelle position du joueur
 
-    # Modification des variables de position du personnage en fonction des touches enfoncées
-    if keys[pygame.K_LEFT]:
-        player_x = old_player_x - player_speed
-    if keys[pygame.K_RIGHT]:
-        player_x = old_player_x + player_speed
-    if keys[pygame.K_UP]:
-        player_y = old_player_y - player_speed
-    if keys[pygame.K_DOWN]:
-        player_y = old_player_y + player_speed
+        # Afficher l'image du personnage à sa nouvelle position
+        screen.blit(player, (player_x, player_y))
 
-    # Effacer l'emplacement précédent de l'image
-    screen.fill((255, 255, 255),
-                (old_player_x, old_player_y, player.get_width(), player.get_height()))
+        old_player_x, old_player_y = player_x, player_y
+        i_old_player_x, i_old_player_y = i_player_x, i_player_y
 
-    # Afficher l'image du personnage à sa nouvelle position
-    screen.blit(player, (player_x, player_y))
+        # Rafraîchir l'écran
+        pygame.display.flip()
 
-    # Rafraîchir l'écran
-    pygame.display.flip()
+
 
 # Quitter Pygame
 pygame.quit()
