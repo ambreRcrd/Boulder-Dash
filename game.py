@@ -3,32 +3,55 @@ import unittest
 # Importation d'un niveau
 level_path = "/Users/ambrericouard/Desktop/boulder_dash/level_test.txt"
 
-class Piece:
-    def __init__(self, x, y, id):
+class Wall:
+    def __init__(self, x, y):
         self.x = x
         self.y = y
+        self.id = 'w'
+        self.is_solid = True
+
+class Coin:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.id = 'c'
         self.is_solid = False # la piece n'est pas solide et peut etre traversee
-        self.id = id
 
 class Brick:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.is_solid = True  # la brique est solide et ne peut pas être traversée
+        self.id = 'b'
+        self.is_solid = False  # la brique est solide et ne peut pas être traversée
         self.is_gravity_affected = False  # la brique n'est pas affectée par la gravité
 
 class Player:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        self.id = '@'
         self.is_solid = True  # le joueur est solide et ne peut pas être traversé
         self.is_gravity_affected = True  # le joueur est affecté par la gravité
-        self.has_diamonds = 0  # le joueur commence avec 0 diamants
+        self.coins = 0  # le joueur commence avec 0 diamants
+
+    def go_left(self):
+        self.y -= 1
+
+    def go_right(self):
+        self.y += 1
+
+    def go_up(self):
+        self.x -= 1
+
+    def go_down(self):
+        self.x += 1
+
 
 class Diamond:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        self.id = 'd'
         self.is_solid = False  # le diamant n'est pas solide et peut être traversé
         self.is_gravity_affected = True  # le diamant est affecté par la gravité
 
@@ -36,14 +59,17 @@ class Stone:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        self.id = 's'
         self.is_solid = True  # la pierre est solide et ne peut pas être traversée
         self.is_gravity_affected = True  # la pierre est affectée par la gravité
         self.is_pushable = True  # la pierre peut être poussée par le joueur ou d'autres objets
+
 
 class Empty:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        self.id = ' '
         self.is_solid = False  # l'espace vide n'est pas solide et peut être traversé
         self.is_gravity_affected = False  # l'espace vide n'est pas affecté par la gravité
 
@@ -53,8 +79,16 @@ class Board:
         self.width = width
         self.height = height
         self.level_path = level_path
+        self.class_correspondings = {
+            '@': Player,
+            'b': Brick,
+            'w': Wall,
+            's': Stone,
+            'c': Coin,
+            ' ': Empty
+        }
         self.grid = self.create_grid()
-        self.player = Player(self.get_player_coord()[0], self.get_player_coord()[1])  # initialiser le joueur en haut à gauche
+        self.player = Player(self.get_icone_coord('@')[0], self.get_icone_coord('@')[1])  # initialiser le joueur en haut à gauche
 
     def update(self):
         # Mettre à jour la position des pièces soumises à la gravité
@@ -65,19 +99,21 @@ class Board:
 
     def create_grid(self):
         with open(self.level_path, "r") as f:
-            return [list(line.strip()) for line in f.readlines()]
+            grid = [list(line.strip()) for line in f.readlines()]
+        nb_lignes, nb_colonnes = len(grid), len(grid[0])
 
-    def get_player_coord(self):
-        x_coord, y_coord = 0, 0
-        nb_lignes, nb_colonnes = len(self.grid), len(self.grid[0])
-        size_x, size_y = self.width / nb_colonnes, self.height / nb_lignes
         for y in range(nb_colonnes):
             for x in range(nb_lignes):
-                if self.grid[x][y] == '@':
-                    return x_coord, y_coord  # position initiale du joueur
-                y_coord += size_y
-            x_coord += size_x
-            y_coord = 0
+                icone = grid[x][y]
+                corres_class = self.class_correspondings[icone]
+                grid[x][y] = corres_class(x, y)
+        return grid
+
+    def get_icone_coord(self, icone_symb): #utile?
+        for y in range(len(self.grid)):
+            for icone in self.grid[y]:
+                if icone.id == icone_symb:
+                    return icone.x, icone.y
         return 0, 0
 
     def move_falling_piece(self, x, y):
@@ -167,8 +203,8 @@ class Board:
 class TestBoard(unittest.TestCase):
     def setUp(self):
         self.board = Board(5, 5, level_path)
-        self.board.grid[1][1] = Piece(1, 1, 1)
-        self.board.grid[3][3] = Piece(3, 3, 2)
+        self.board.grid[1][1] = Coin(1, 1) #Coin(1, 1, 1)
+        self.board.grid[3][3] = Coin(3, 3) #Coin(3, 3, 2)
 
     def test_piece_positions(self):
         self.assertEqual(self.board.grid[1][1].x, 1)
@@ -176,6 +212,6 @@ class TestBoard(unittest.TestCase):
         self.assertEqual(self.board.grid[3][3].x, 3)
         self.assertEqual(self.board.grid[3][3].y, 3)
 
-    def test_piece_ids(self):
-        self.assertEqual(self.board.grid[1][1].id, 1)
-        self.assertEqual(self.board.grid[3][3].id, 2)
+    #def test_piece_ids(self):
+    #    self.assertEqual(self.board.grid[1][1].id, 1)
+    #    self.assertEqual(self.board.grid[3][3].id, 2)

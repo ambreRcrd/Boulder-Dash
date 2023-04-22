@@ -21,7 +21,6 @@ screen.fill(background_color)
 level_path = "/Users/ambrericouard/Desktop/boulder_dash/level_test.txt"
 board = Board(screen_width, screen_height, level_path)
 grid = board.create_grid()
-print(np.array(grid))
 
 # Chargement des images
 player = pygame.image.load('/Users/ambrericouard/Desktop/boulder_dash/bonhomme.png') # joueur
@@ -41,13 +40,13 @@ wall = pygame.transform.scale(wall, (size_x, size_y))
 stone = pygame.transform.scale(stone, (size_x, size_y))
 coin = pygame.transform.scale(coin, (size_x, size_y))
 
-# Dictionnaire de correspondance des symboles des icônes avec leur icône
-symbol_correspondings = {
+# Dictionnaire de correspondance des symboles des icônes avec leur image d'icône
+icone_correspondings = {
     '@': player,
     'b': brick,
     'w': wall,
     's': stone,
-    'c': coin
+    'c': coin,
 }
 
 # Affichage des icônes
@@ -55,25 +54,47 @@ x_coord, y_coord = 0, 0
 for y in range(nb_colonnes):
     for x in range(nb_lignes):
         icone = grid[x][y]
-        if icone != ' ':
-            screen.blit(symbol_correspondings[icone], (x_coord,y_coord))
-        if icone == '@':
-            player_x, player_y = x_coord, y_coord # position initiale du joueur
-            i_player_x, i_player_y = y, x
-        y_coord += size_y
-    x_coord += size_x
-    y_coord = 0
+        if icone.id != ' ':
+            image = icone_correspondings[icone.id]
+            x_coord, y_coord = icone.y* size_x, icone.x * size_y
+            screen.blit(image, (x_coord, y_coord))
+
+bonhomme = board.player
+
+# Coordonnées du joueur
+player_x, player_y = bonhomme.y * size_x, bonhomme.x * size_y
+old_player_x, old_player_y = player_x, player_y
+i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
 
 # Mettez à jour l'affichage pour afficher l'image
 pygame.display.update()
 
-# Vitesse de déplacement du personnage
-old_player_x, old_player_y = player_x, player_y
-i_old_player_x, i_old_player_y = i_player_x, i_player_y
+# chargement de la police
+font = pygame.font.Font(None, 36)
+
+# Temps de jeu
+start_time = pygame.time.get_ticks()
+game_time = 0
+game_time_limit = 150
+
+def to_list_grid(grid): # fonction de test
+    new_grid = [[0 for y in range(nb_colonnes)] for x in range(nb_lignes)]
+    for y in range(nb_colonnes):
+        for x in range(nb_lignes):
+            new_grid[x][y] = grid[x][y].id
+    print(np.array(new_grid))
+    return
+
+to_list_grid(grid)
 
 # Boucle principale du jeu
 running = True
 while running:
+    game_time = (pygame.time.get_ticks() - start_time) // 1000  # en secondes
+    # Vérification si le temps imparti est écoulé
+    if game_time >= game_time_limit:
+        # Fin du jeu ou autre traitement
+        running = False
     Board(screen_width, screen_height, level_path)
     # Gestion des événements
     for event in pygame.event.get():
@@ -82,37 +103,47 @@ while running:
         elif event.type == pygame.KEYDOWN:
             # Détection des touches enfoncées
             if event.key == pygame.K_LEFT:
-                if grid[i_player_y][i_player_x-1] != 'w':
-                    player_x = old_player_x - size_x
-                    i_player_x = i_old_player_x - 1
+                if not grid[bonhomme.x][bonhomme.y-1].is_solid:
+                    bonhomme.go_left()
             elif event.key == pygame.K_RIGHT:
-                if grid[i_player_y][i_player_x + 1] != 'w':
-                    player_x = old_player_x + size_x
-                    i_player_x = i_old_player_x + 1
+                if not grid[bonhomme.x][bonhomme.y+1].is_solid:
+                    bonhomme.go_right()
             elif event.key == pygame.K_UP:
-                if grid[i_player_y - 1][i_player_x] != 'w':
-                    player_y = old_player_y - size_y
-                    i_player_y = i_old_player_y - 1
+                if not grid[bonhomme.x-1][bonhomme.y].is_solid:
+                    bonhomme.go_up()
             elif event.key == pygame.K_DOWN:
-                if grid[i_player_y + 1][i_player_x] != 'w':
-                    player_y = old_player_y + size_y
-                    i_player_y = i_old_player_y + 1
+                if not grid[bonhomme.x+1][bonhomme.y].is_solid:
+                    bonhomme.go_down()
 
-            grid[i_old_player_y][i_old_player_x] = ' '
-            grid[i_player_y][i_player_x] = '@'
-            print(np.array(grid))
+            if grid[bonhomme.x][bonhomme.y].id == 'c':
+                bonhomme.coins += 1
 
-        screen.fill(background_color, (old_player_x, old_player_y, player.get_width(), player.get_height())) # Supprime le joueur de son ancienne position
-        screen.fill(background_color, (player_x, player_y, player.get_width(), player.get_height())) # Supprimer les icônes situées à la nouvelle position du joueur
+            grid[i_old_player_x][i_old_player_y] = Empty(i_old_player_x, i_old_player_y)
+            grid[bonhomme.x][bonhomme.y] = Player(bonhomme.x, bonhomme.y)
+            to_list_grid(grid)
 
-        # Afficher l'image du personnage à sa nouvelle position
-        screen.blit(player, (player_x, player_y))
+    player_x, player_y = bonhomme.y * size_x, bonhomme.x * size_y
+    screen.fill(background_color, (old_player_x, old_player_y, player.get_width(), player.get_height())) # Supprime le joueur de son ancienne position
+    screen.fill(background_color, (player_x, player_y, player.get_width(), player.get_height())) # Supprime les icônes situées à la nouvelle position du joueur
 
-        old_player_x, old_player_y = player_x, player_y
-        i_old_player_x, i_old_player_y = i_player_x, i_player_y
+    # Afficher l'image du personnage à sa nouvelle position
+    screen.blit(player, (player_x, player_y))
 
-        # Rafraîchir l'écran
-        pygame.display.flip()
+    # Affichage du score sur l'écran
+    score_text = font.render("Score: {}".format(bonhomme.coins), True, (255, 255, 255))
+    screen.fill(background_color, (10, 10, score_text.get_width(), score_text.get_height()))
+    screen.blit(score_text, (10, 10))
+
+    # Affichage du temps restant
+    time_text = font.render("Time: {:02d}".format(game_time_limit - game_time), True, (255, 255, 255))
+    screen.fill(background_color, (150, 10, time_text.get_width(), time_text.get_height()))
+    screen.blit(time_text, (150, 10))
+
+    old_player_x, old_player_y = player_x, player_y
+    i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
+
+    # Rafraîchir l'écran
+    pygame.display.flip()
 
 
 
