@@ -1,6 +1,7 @@
+import numpy as np
 import unittest
 
-# Importation d'un niveau
+# Import d'un niveau
 level_path = "/Users/ambrericouard/Desktop/boulder_dash/level_test.txt"
 
 class Wall:
@@ -9,13 +10,15 @@ class Wall:
         self.y = y
         self.id = 'w'
         self.is_solid = True
+        self.is_gravity_affected = False
 
 class Coin:
     def __init__(self, x, y):
         self.x = x
         self.y = y
         self.id = 'c'
-        self.is_solid = False # la piece n'est pas solide et peut etre traversee
+        self.is_solid = False # la piece n'est pas solide et peut être traversée
+        self.is_gravity_affected = True
 
 class Brick:
     def __init__(self, x, y):
@@ -31,8 +34,11 @@ class Player:
         self.y = y
         self.id = '@'
         self.is_solid = True  # le joueur est solide et ne peut pas être traversé
-        self.is_gravity_affected = True  # le joueur est affecté par la gravité
+        self.is_gravity_affected = False  # le joueur est affecté par la gravité
         self.coins = 0  # le joueur commence avec 0 diamants
+
+    def gravity_effect(self):
+        self.y -= 1
 
     def go_left(self):
         self.y -= 1
@@ -55,6 +61,9 @@ class Diamond:
         self.is_solid = False  # le diamant n'est pas solide et peut être traversé
         self.is_gravity_affected = True  # le diamant est affecté par la gravité
 
+    def gravity_effect(self):
+        self.y -= 1
+
 class Stone:
     def __init__(self, x, y):
         self.x = x
@@ -63,6 +72,9 @@ class Stone:
         self.is_solid = True  # la pierre est solide et ne peut pas être traversée
         self.is_gravity_affected = True  # la pierre est affectée par la gravité
         self.is_pushable = True  # la pierre peut être poussée par le joueur ou d'autres objets
+
+    def gravity_effect(self):
+        self.y -= 1
 
 
 class Empty:
@@ -97,6 +109,30 @@ class Board:
                 if isinstance(self.grid[x][y], Falling):
                     self.move_falling_piece(x, y)
 
+    def apply_gravity(self, grid):
+        for x in range(len(grid[0])):
+            for y in range(len(grid)-1, -1, -1):
+                # Si la case contient une pierre
+                if grid[y][x].is_gravity_affected:
+                    # Si la case en dessous est vide
+                    if grid[y+1][x].id == " ":
+                        # La pierre tombe d'une case
+                        icone = grid[y][x].id
+                        class_corres = self.class_correspondings[icone]
+                        grid[y+1][x] = class_corres(x, y+1)
+                        grid[y][x] = Empty(x, y)
+                        # Si la pierre est tombée, on vérifie si elle peut encore tomber
+                        self.apply_gravity(grid)
+
+    def moved_icone(self, old_grid, grid):
+        to_erase = []
+        for x in range(len(old_grid[0])):
+            for y in range(len(old_grid)):
+                if old_grid[y][x] != grid[y][x] and grid[y][x].is_gravity_affected:
+                    if grid[y+1][x].id == ' ':
+                        to_erase.append([x, y])
+        return to_erase
+
     def create_grid(self):
         with open(self.level_path, "r") as f:
             grid = [list(line.strip()) for line in f.readlines()]
@@ -108,6 +144,15 @@ class Board:
                 corres_class = self.class_correspondings[icone]
                 grid[x][y] = corres_class(x, y)
         return grid
+
+    def to_list_grid(self, grid):  # fonction de test
+        nb_lignes, nb_colonnes = len(grid), len(grid[0])
+        new_grid = [[0 for y in range(nb_colonnes)] for x in range(nb_lignes)]
+        for y in range(nb_colonnes):
+            for x in range(nb_lignes):
+                new_grid[x][y] = grid[x][y].id
+        print(np.array(new_grid))
+        return
 
     def get_icone_coord(self, icone_symb): #utile?
         for y in range(len(self.grid)):
