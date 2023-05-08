@@ -106,7 +106,7 @@ class Board:
         # Mettre à jour la position des pièces soumises à la gravité
         for y in range(self.height - 1, -1, -1):  # parcourir les colonnes de bas en haut
             for x in range(self.width):
-                if isinstance(self.grid[x][y], Falling):
+                if isinstance(self.grid[y][x], Falling):
                     self.move_falling_piece(x, y)
 
     #def apply_gravity(self, grid):
@@ -127,16 +127,16 @@ class Board:
     def apply_gravity(self, grid):
         new_grid = [row[:] for row in grid]  # Créer une copie de la grille originale
 
-        for x in range(len(new_grid[0])):
-            for y in range(len(new_grid) - 1, -1, -1):
+        for y in range(len(new_grid) - 1, -1, -1):
+            for x in range(len(new_grid[0])):
                 # Si la case contient une pierre
                 if new_grid[y][x].is_gravity_affected:
                     # Si la case en dessous est vide
-                    if new_grid[y + 1][x].id == " ":
+                    if new_grid[y+1][x].id == " ":
                         # La pierre tombe d'une case
                         icone = new_grid[y][x].id
                         class_corres = self.class_correspondings[icone]
-                        new_grid[y + 1][x] = class_corres(x, y + 1)
+                        new_grid[y+1][x] = class_corres(x, y+1)
                         new_grid[y][x] = Empty(x, y)
                         # Si la pierre est tombée, on vérifie si elle peut encore tomber
                         self.apply_gravity(new_grid)  # Réappliquer la gravité à la nouvelle grille
@@ -144,11 +144,11 @@ class Board:
 
     def moved_icone(self, old_grid, grid):
         to_erase = []
-        for x in range(len(old_grid[0])):
-            for y in range(len(old_grid)):
+        for y in range(1,len(old_grid)):
+            for x in range(1,len(old_grid[0])):
                 if old_grid[y][x] != grid[y][x] and grid[y][x].is_gravity_affected:
-                    if grid[y+1][x].id == ' ':
-                        to_erase.append([x, y])
+                    if grid[y-1][x].id == ' ':
+                        to_erase.append([x, y-1])
         return to_erase
 
     def create_grid(self):
@@ -160,15 +160,15 @@ class Board:
             for x in range(nb_colonnes):
                 icone = grid[y][x]
                 corres_class = self.class_correspondings[icone]
-                grid[y][x] = corres_class(y, x)
+                grid[y][x] = corres_class(x, y)
         return grid
 
     def to_list_grid(self, grid):  # fonction de test
         nb_lignes, nb_colonnes = len(grid), len(grid[0])
         new_grid = [[0 for y in range(nb_colonnes)] for x in range(nb_lignes)]
-        for y in range(nb_colonnes):
-            for x in range(nb_lignes):
-                new_grid[x][y] = grid[x][y].id
+        for y in range(nb_lignes):
+            for x in range(nb_colonnes):
+                new_grid[y][x] = grid[y][x].id
         print(np.array(new_grid))
         return
 

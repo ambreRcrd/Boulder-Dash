@@ -47,7 +47,7 @@ coin = pygame.transform.scale(coin, (size_x, size_y))
 bonhomme = board.player
 
 # Coordonnées réelles du joueur
-player_x, player_y = bonhomme.y * size_x, bonhomme.x * size_y
+player_x, player_y = bonhomme.x * size_x, bonhomme.y * size_y
 old_player_x, old_player_y = player_x, player_y
 i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
 
@@ -69,7 +69,7 @@ def print_grid(grid):
                 image = icone_correspondings[icone.id]
                 x_coord, y_coord = x * size_x, y * size_y
                 screen.blit(image, (x_coord, y_coord))
-                pygame.display.update()
+    pygame.display.update()
 print_grid(grid)
 
 def try_gravity(old_grid,grid):
@@ -83,8 +83,8 @@ def try_gravity(old_grid,grid):
 def print_gravity(grid):
     old_grid = copy.deepcopy(grid)
     grid = board.apply_gravity(old_grid)
-    print_grid(grid)
     try_gravity(old_grid, grid)
+    return grid
 
 # Chargement de la police
 font = pygame.font.Font(None, 36)
@@ -92,8 +92,7 @@ font = pygame.font.Font(None, 36)
 # Temps de jeu
 start_time = pygame.time.get_ticks()
 game_time = 0
-game_time_limit = 150
-
+game_time_limit = 110
 
 
 # Boucle principale du jeu
@@ -105,9 +104,18 @@ while running:
         running = False
 
     # Apply gravity
-    print_gravity(grid)
-
-    board.to_list_grid(grid)
+    old_grid = copy.deepcopy(grid)
+    grid = board.apply_gravity(old_grid)
+    #try_gravity(old_grid, grid)
+    if old_grid != grid:
+        print(111111111)
+        to_erase = board.moved_icone(old_grid, grid)
+        print(to_erase)
+        for coord in to_erase:
+            x_coord, y_coord = coord[0] * size_x, coord[1] * size_y
+            screen.fill(background_color, (x_coord, y_coord, size_x, size_y))
+            print([coord[0], coord[1]], "is erased")
+    pygame.display.update()
 
     # Gestion des événements
     for event in pygame.event.get():
@@ -145,25 +153,41 @@ while running:
             screen.blit(player, (player_x, player_y))
 
             # Apply gravity
-            print_gravity(grid)
+            old_grid = copy.deepcopy(grid)
+            grid = board.apply_gravity(old_grid)
+            #try_gravity(old_grid, grid)
+            if old_grid != grid:
+                to_erase = board.moved_icone(old_grid, grid)
+                for coord in to_erase:
+                    x_coord, y_coord = coord[0] * size_x, coord[1] * size_y
+                    screen.fill(background_color, (x_coord, y_coord, size_x, size_y))
+                    print([coord[0], coord[1]], "is erased")
+            print_grid(grid)
+            pygame.display.update()
 
             board.to_list_grid(grid)
-
-            # Affichage du score sur l'écran
-            score_text = font.render("Score: {}".format(bonhomme.coins), True, (255, 255, 255))
-            screen.fill(background_color, (10, 10, score_text.get_width(), score_text.get_height()))
-            screen.blit(score_text, (10, 10))
-
-            # Affichage du temps restant
-            time_text = font.render("Time: {:02d}".format(game_time_limit - game_time), True, (255, 255, 255))
-            screen.fill(background_color, (150, 10, time_text.get_width(), time_text.get_height()))
-            screen.blit(time_text, (150, 10))
 
             old_player_x, old_player_y = player_x, player_y
             i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
 
-            # Rafraîchir l'écran
-            pygame.display.flip()
+    # Affichage du score sur l'écran
+    score_text = font.render("Score: {}".format(bonhomme.coins), True, (255, 255, 255))
+    screen.fill(background_color, (10, 10, score_text.get_width(), score_text.get_height()))
+    screen.blit(score_text, (10, 10))
+
+    # Affichage du temps restant
+    time_text = font.render("Time: {:02d}".format(game_time_limit - game_time), True, (255, 255, 255))
+    try:
+        time_text_w, time_text_h = old_text_size[0], old_text_size[1]
+    except NameError:
+        time_text_w, time_text_h = time_text.get_width(), time_text.get_height()
+    screen.fill(background_color, (150, 10, time_text_w, time_text_h))
+    screen.blit(time_text, (150, 10))
+    old_text_size = time_text.get_width(), time_text.get_height()
+
+
+    # Rafraîchir l'écran
+    pygame.display.flip()
 
 
 # Quitter Pygame
