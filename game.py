@@ -41,16 +41,16 @@ class Player:
         self.y -= 1
 
     def go_left(self):
-        self.y -= 1
-
-    def go_right(self):
-        self.y += 1
-
-    def go_up(self):
         self.x -= 1
 
-    def go_down(self):
+    def go_right(self):
         self.x += 1
+
+    def go_up(self):
+        self.y -= 1
+
+    def go_down(self):
+        self.y += 1
 
 
 class Diamond:
@@ -109,20 +109,38 @@ class Board:
                 if isinstance(self.grid[x][y], Falling):
                     self.move_falling_piece(x, y)
 
+    #def apply_gravity(self, grid):
+    #    for x in range(len(grid[0])):
+    #        for y in range(len(grid)-1, -1, -1):
+    #            # Si la case contient une pierre
+    #            if grid[y][x].is_gravity_affected:
+    #                # Si la case en dessous est vide
+    #                if grid[y+1][x].id == " ":
+    #                    # La pierre tombe d'une case
+    #                    icone = grid[y][x].id
+    #                    class_corres = self.class_correspondings[icone]
+    #                    grid[y+1][x] = class_corres(x, y+1)
+    #                    grid[y][x] = Empty(x, y)
+    #                    # Si la pierre est tombée, on vérifie si elle peut encore tomber
+    #                    self.apply_gravity(grid)
+
     def apply_gravity(self, grid):
-        for x in range(len(grid[0])):
-            for y in range(len(grid)-1, -1, -1):
+        new_grid = [row[:] for row in grid]  # Créer une copie de la grille originale
+
+        for x in range(len(new_grid[0])):
+            for y in range(len(new_grid) - 1, -1, -1):
                 # Si la case contient une pierre
-                if grid[y][x].is_gravity_affected:
+                if new_grid[y][x].is_gravity_affected:
                     # Si la case en dessous est vide
-                    if grid[y+1][x].id == " ":
+                    if new_grid[y + 1][x].id == " ":
                         # La pierre tombe d'une case
-                        icone = grid[y][x].id
+                        icone = new_grid[y][x].id
                         class_corres = self.class_correspondings[icone]
-                        grid[y+1][x] = class_corres(x, y+1)
-                        grid[y][x] = Empty(x, y)
+                        new_grid[y + 1][x] = class_corres(x, y + 1)
+                        new_grid[y][x] = Empty(x, y)
                         # Si la pierre est tombée, on vérifie si elle peut encore tomber
-                        self.apply_gravity(grid)
+                        self.apply_gravity(new_grid)  # Réappliquer la gravité à la nouvelle grille
+        return new_grid
 
     def moved_icone(self, old_grid, grid):
         to_erase = []
@@ -138,11 +156,11 @@ class Board:
             grid = [list(line.strip()) for line in f.readlines()]
         nb_lignes, nb_colonnes = len(grid), len(grid[0])
 
-        for y in range(nb_colonnes):
-            for x in range(nb_lignes):
-                icone = grid[x][y]
+        for y in range(nb_lignes):
+            for x in range(nb_colonnes):
+                icone = grid[y][x]
                 corres_class = self.class_correspondings[icone]
-                grid[x][y] = corres_class(x, y)
+                grid[y][x] = corres_class(y, x)
         return grid
 
     def to_list_grid(self, grid):  # fonction de test
