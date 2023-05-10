@@ -1,7 +1,7 @@
+import button
 import copy
 import numpy as np
 import pygame
-import button
 
 from game import *
 
@@ -19,23 +19,21 @@ pygame.display.set_caption("BOULDER DASH")
 background_color = (150, 150, 150)
 screen.fill(background_color)
 
-# Importation d'un niveau
 def import_niveau(level_path):
-    global board
+    '''Importation d'un niveau'''
+    global board, grid, bonhomme
     board = Board(screen_width, screen_height, level_path)
-    global grid
-    grid = board.grid
+    grid, bonhomme = board.grid, board.player
     board.apply_gravity(board.grid) # On applique la gravité au niveau avant même que le jeu commence
-    board.to_list_grid(grid) # Affichage python
-
+    board.to_list_grid(grid) # Affichage python de la grille
 import_niveau("level_test.txt")
 
 # Chargement des images
-player = pygame.image.load('bonhomme.png') # joueur
-brick = pygame.image.load('brick.png') # brique
-wall = pygame.image.load('wall.png') # mur
-stone = pygame.image.load('stone.png') # pierre
-coin = pygame.image.load('coin.png') # piece
+player = pygame.image.load('bonhomme.png') # Joueur
+brick = pygame.image.load('brick.png') # Brique
+wall = pygame.image.load('wall.png') # Mur
+stone = pygame.image.load('stone.png') # Pierre
+coin = pygame.image.load('coin.png') # Piece
 
 # Tailles des icônes
 nb_lignes, nb_colonnes = len(grid), len(grid[0])
@@ -48,14 +46,10 @@ wall = pygame.transform.scale(wall, (size_x, size_y))
 stone = pygame.transform.scale(stone, (size_x, size_y))
 coin = pygame.transform.scale(coin, (size_x, size_y))
 
-# Création du joueur
-bonhomme = board.player
-
 # Coordonnées réelles du joueur
 player_x, player_y = bonhomme.x * size_x, bonhomme.y * size_y
 old_player_x, old_player_y = player_x, player_y
 i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
-i_old_player_x0, i_old_player_y0 = i_old_player_x, i_old_player_y
 
 # Dictionnaire de correspondance des symboles des icônes avec leur image d'icône
 icone_correspondings = {
@@ -68,6 +62,7 @@ icone_correspondings = {
 
 # Affichage des icônes
 def print_grid(grid):
+    '''Affichage de la grille'''
     for y in range(nb_lignes):
         for x in range(nb_colonnes):
             icone = grid[y][x]
@@ -79,16 +74,12 @@ def print_grid(grid):
 print_grid(grid)
 
 def try_gravity(old_grid,grid):
+    '''Mise à jour de l'affichage si la gravité modifie la grille'''
     if old_grid != grid:
         to_erase = board.moved_icone(old_grid, grid)
         for coord in to_erase:
             x_coord, y_coord = coord[0] * size_x, coord[1] * size_y
             screen.fill(background_color, (x_coord, y_coord, size_x, size_y))
-
-#def print_gravity(grid): # not used
-#    old_grid = copy.deepcopy(grid)
-#    grid = board.apply_gravity(old_grid)
-#    try_gravity(old_grid, grid)
 
 # Chargement de la police
 font = pygame.font.Font(None, 36)
@@ -114,7 +105,7 @@ game_pause = False
 # Boucle principale du jeu
 running = True
 while running:
-    if game_pause:      #CHANGEMENTS
+    if game_pause:
         # Boucle de pause
         pause_running = True
         while pause_running:
@@ -122,30 +113,30 @@ while running:
                 pause_running = False
                 game_pause = False
                 screen.fill(background_color)
+
             elif exit_button.draw(screen):
                 pause_running = False
                 running = False
+
             elif replay_button.draw(screen):
                 del grid
                 del bonhomme
                 del board
-                import_niveau("level_test.txt")
-                bonhomme = board.player
-                player_x, player_y = bonhomme.y * size_x, bonhomme.x * size_y
+                import_niveau("level_test.txt") # On regénère le plateau de jeu
+                player_x, player_y = bonhomme.x * size_x, bonhomme.y * size_y
                 old_player_x, old_player_y = player_x, player_y
                 i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
-                i_old_player_x0, i_old_player_y0 = i_old_player_x, i_old_player_y
                 print_grid(grid)
                 start_time = pygame.time.get_ticks()
-                game_time = 0
-                game_time_limit = 150
                 pause_running = False
                 game_pause = False
                 screen.fill(background_color)
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pause_running = False
                     running = False
+
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         pause_running = False
@@ -166,19 +157,24 @@ while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
             elif event.type == pygame.KEYDOWN:
                 # Détection des touches enfoncées
                 if event.key == pygame.K_SPACE:
                     game_pause = True
+
                 elif event.key == pygame.K_LEFT:
                     if not grid[bonhomme.y][bonhomme.x-1].is_solid:
                         bonhomme.go_left()
+
                 elif event.key == pygame.K_RIGHT:
                     if not grid[bonhomme.y][bonhomme.x+1].is_solid:
                         bonhomme.go_right()
+
                 elif event.key == pygame.K_UP:
                     if not grid[bonhomme.y-1][bonhomme.x].is_solid:
                         bonhomme.go_up()
+
                 elif event.key == pygame.K_DOWN:
                     if not grid[bonhomme.y+1][bonhomme.x].is_solid:
                         bonhomme.go_down()
@@ -211,25 +207,24 @@ while running:
                 old_player_x, old_player_y = player_x, player_y
                 i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
 
-        # Affichage du score sur l'écran
-        score_text = font.render("Score: {}".format(bonhomme.coins), True, (255, 255, 255))
-        screen.fill(background_color, (10, 10, score_text.get_width(), score_text.get_height()))
-        screen.blit(score_text, (10, 10))
+    # Affichage du score sur l'écran
+    score_text = font.render("Score: {}".format(bonhomme.coins), True, (255, 255, 255))
+    screen.fill(background_color, (10, 10, score_text.get_width(), score_text.get_height()))
+    screen.blit(score_text, (10, 10))
 
-        # Affichage du temps restant
-        time_text = font.render("Time: {:02d}".format(game_time_limit - game_time), True, (255, 255, 255))
-        try:
-            time_text_w, time_text_h = old_text_size[0], old_text_size[1]
-        except NameError:
-            time_text_w, time_text_h = time_text.get_width(), time_text.get_height()
+    # Affichage du temps restant
+    time_text = font.render("Time: {:02d}".format(game_time_limit - game_time), True, (255, 255, 255))
+    try:
+        time_text_w, time_text_h = old_text_size[0], old_text_size[1]
+    except NameError:
+        time_text_w, time_text_h = time_text.get_width(), time_text.get_height()
 
-        screen.fill(background_color, (150, 10, time_text_w, time_text_h))
-        screen.blit(time_text, (150, 10))
-        old_text_size = time_text.get_width(), time_text.get_height()
+    screen.fill(background_color, (150, 10, time_text_w, time_text_h))
+    screen.blit(time_text, (150, 10))
+    old_text_size = time_text.get_width(), time_text.get_height()
 
     # Rafraîchir l'écran
     pygame.display.flip()
-
 
 # Quitter Pygame
 pygame.quit()
