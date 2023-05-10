@@ -25,7 +25,6 @@ def import_niveau(level_path):
     board = Board(screen_width, screen_height, level_path)
     global grid
     grid = board.grid
-    grid0 = copy.deepcopy(grid)
     board.apply_gravity(board.grid) # On applique la gravité au niveau avant même que le jeu commence
     board.to_list_grid(grid) # Affichage python
 
