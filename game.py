@@ -2,7 +2,7 @@ import numpy as np
 import unittest
 
 # Import d'un niveau
-level_path = "/Users/ambrericouard/Desktop/boulder_dash/level_test.txt"
+level_path = "level_test.txt"
 
 class Wall:
     def __init__(self, x, y):

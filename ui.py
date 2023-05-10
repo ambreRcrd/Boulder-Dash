@@ -1,6 +1,7 @@
 import copy
 import numpy as np
 import pygame
+import button
 
 from game import *
 
@@ -19,18 +20,23 @@ background_color = (150, 150, 150)
 screen.fill(background_color)
 
 # Importation d'un niveau
-level_path = "/Users/ambrericouard/Desktop/boulder_dash/level_test.txt"
-board = Board(screen_width, screen_height, level_path)
-grid = board.grid
-board.apply_gravity(board.grid) # On applique la gravité au niveau avant même que le jeu commence
-board.to_list_grid(grid) # Affichage python
+def import_niveau(level_path):
+    global board
+    board = Board(screen_width, screen_height, level_path)
+    global grid
+    grid = board.grid
+    grid0 = copy.deepcopy(grid)
+    board.apply_gravity(board.grid) # On applique la gravité au niveau avant même que le jeu commence
+    board.to_list_grid(grid) # Affichage python
+
+import_niveau("level_test.txt")
 
 # Chargement des images
-player = pygame.image.load('/Users/ambrericouard/Desktop/boulder_dash/bonhomme.png') # joueur
-brick = pygame.image.load('/Users/ambrericouard/Desktop/boulder_dash/brick.png') # brique
-wall = pygame.image.load('/Users/ambrericouard/Desktop/boulder_dash/wall.png') # mur
-stone = pygame.image.load('/Users/ambrericouard/Desktop/boulder_dash/stone.png') # pierre
-coin = pygame.image.load('/Users/ambrericouard/Desktop/boulder_dash/coin.png') # piece
+player = pygame.image.load('bonhomme.png') # joueur
+brick = pygame.image.load('brick.png') # brique
+wall = pygame.image.load('wall.png') # mur
+stone = pygame.image.load('stone.png') # pierre
+coin = pygame.image.load('coin.png') # piece
 
 # Tailles des icônes
 nb_lignes, nb_colonnes = len(grid), len(grid[0])
@@ -50,6 +56,7 @@ bonhomme = board.player
 player_x, player_y = bonhomme.x * size_x, bonhomme.y * size_y
 old_player_x, old_player_y = player_x, player_y
 i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
+i_old_player_x0, i_old_player_y0 = i_old_player_x, i_old_player_y
 
 # Dictionnaire de correspondance des symboles des icônes avec leur image d'icône
 icone_correspondings = {
@@ -69,7 +76,7 @@ def print_grid(grid):
                 image = icone_correspondings[icone.id]
                 x_coord, y_coord = x * size_x, y * size_y
                 screen.blit(image, (x_coord, y_coord))
-    pygame.display.update()
+                pygame.display.update()
 print_grid(grid)
 
 def try_gravity(old_grid,grid):
@@ -78,13 +85,11 @@ def try_gravity(old_grid,grid):
         for coord in to_erase:
             x_coord, y_coord = coord[0] * size_x, coord[1] * size_y
             screen.fill(background_color, (x_coord, y_coord, size_x, size_y))
-    pygame.display.update()
 
-def print_gravity(grid):
-    old_grid = copy.deepcopy(grid)
-    grid = board.apply_gravity(old_grid)
-    try_gravity(old_grid, grid)
-    return grid
+#def print_gravity(grid): # not used
+#    old_grid = copy.deepcopy(grid)
+#    grid = board.apply_gravity(old_grid)
+#    try_gravity(old_grid, grid)
 
 # Chargement de la police
 font = pygame.font.Font(None, 36)
@@ -94,97 +99,134 @@ start_time = pygame.time.get_ticks()
 game_time = 0
 game_time_limit = 110
 
+#Chargement image bouton
+play_img = pygame.image.load("play_bouton.png").convert_alpha()
+replay_img = pygame.image.load("replay_bouton.png").convert_alpha()
+exit_img = pygame.image.load("exit_bouton.png").convert_alpha()
+
+#Création boutons du menu pause
+play_button = button.Button(300, 125, play_img, 1)
+replay_button = button.Button(300, 250, replay_img, 1)
+exit_button = button.Button(300, 375, exit_img, 1)
+
+#Check jeu en pause
+game_pause = False
 
 # Boucle principale du jeu
 running = True
 while running:
-    # Calcul du temps écoulé depuis le début du jeu et vérification si le temps imparti est écoulé
-    game_time = (pygame.time.get_ticks() - start_time) // 1000  # en secondes
-    if game_time >= game_time_limit:
-        running = False
-
-    # Apply gravity
-    old_grid = copy.deepcopy(grid)
-    grid = board.apply_gravity(old_grid)
-    #try_gravity(old_grid, grid)
-    if old_grid != grid:
-        print(111111111)
-        to_erase = board.moved_icone(old_grid, grid)
-        print(to_erase)
-        for coord in to_erase:
-            x_coord, y_coord = coord[0] * size_x, coord[1] * size_y
-            screen.fill(background_color, (x_coord, y_coord, size_x, size_y))
-            print([coord[0], coord[1]], "is erased")
-    pygame.display.update()
-
-    # Gestion des événements
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.KEYDOWN:
-            # Détection des touches enfoncées
-            if event.key == pygame.K_LEFT:
-                if not grid[bonhomme.y][bonhomme.x-1].is_solid:
-                    bonhomme.go_left()
-            elif event.key == pygame.K_RIGHT:
-                if not grid[bonhomme.y][bonhomme.x+1].is_solid:
-                    bonhomme.go_right()
-            elif event.key == pygame.K_UP:
-                if not grid[bonhomme.y-1][bonhomme.x].is_solid:
-                    bonhomme.go_up()
-            elif event.key == pygame.K_DOWN:
-                if not grid[bonhomme.y+1][bonhomme.x].is_solid:
-                    bonhomme.go_down()
-
-            # Le nombre de pièces ramassées est comptabilisé
-            if grid[bonhomme.y][bonhomme.x].id == 'c':
-                bonhomme.coins += 1
-
-            # Mettre à jour la grille
-            grid[i_old_player_y][i_old_player_x] = Empty(i_old_player_x, i_old_player_y)
-            grid[bonhomme.y][bonhomme.x] = Player(bonhomme.x, bonhomme.y)
-
-            # Supprime le joueur de son ancienne position
-            player_x, player_y = bonhomme.x * size_x, bonhomme.y * size_y
-            screen.fill(background_color, (old_player_x, old_player_y, player.get_width(), player.get_height()))
-
-            # Afficher l'image du personnage à sa nouvelle position
-            screen.fill(background_color, (player_x, player_y, player.get_width(), player.get_height()))  # Supprime les icônes situées à la nouvelle position du joueur
-            screen.blit(player, (player_x, player_y))
-
-            # Apply gravity
-            old_grid = copy.deepcopy(grid)
-            grid = board.apply_gravity(old_grid)
-            #try_gravity(old_grid, grid)
-            if old_grid != grid:
-                to_erase = board.moved_icone(old_grid, grid)
-                for coord in to_erase:
-                    x_coord, y_coord = coord[0] * size_x, coord[1] * size_y
-                    screen.fill(background_color, (x_coord, y_coord, size_x, size_y))
-                    print([coord[0], coord[1]], "is erased")
-            print_grid(grid)
+    if game_pause:      #CHANGEMENTS
+        # Boucle de pause
+        pause_running = True
+        while pause_running:
+            if play_button.draw(screen):
+                pause_running = False
+                game_pause = False
+                screen.fill(background_color)
+            elif exit_button.draw(screen):
+                pause_running = False
+                running = False
+            elif replay_button.draw(screen):
+                del grid
+                del bonhomme
+                del board
+                import_niveau("level_test.txt")
+                bonhomme = board.player
+                player_x, player_y = bonhomme.y * size_x, bonhomme.x * size_y
+                old_player_x, old_player_y = player_x, player_y
+                i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
+                i_old_player_x0, i_old_player_y0 = i_old_player_x, i_old_player_y
+                print_grid(grid)
+                start_time = pygame.time.get_ticks()
+                game_time = 0
+                game_time_limit = 150
+                pause_running = False
+                game_pause = False
+                screen.fill(background_color)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pause_running = False
+                    running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        pause_running = False
             pygame.display.update()
+    else:
+        # Calcul du temps écoulé depuis le début du jeu et vérification si le temps imparti est écoulé
+        game_time = (pygame.time.get_ticks() - start_time) // 1000  # en secondes
+        if game_time >= game_time_limit:
+            running = False
 
-            board.to_list_grid(grid)
+        # Apply gravity
+        old_grid = copy.deepcopy(grid)
+        grid = board.apply_gravity(old_grid)
+        try_gravity(old_grid, grid)
+        print_grid(grid)
 
-            old_player_x, old_player_y = player_x, player_y
-            i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
+        # Gestion des événements
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                # Détection des touches enfoncées
+                if event.key == pygame.K_SPACE:
+                    game_pause = True
+                elif event.key == pygame.K_LEFT:
+                    if not grid[bonhomme.y][bonhomme.x-1].is_solid:
+                        bonhomme.go_left()
+                elif event.key == pygame.K_RIGHT:
+                    if not grid[bonhomme.y][bonhomme.x+1].is_solid:
+                        bonhomme.go_right()
+                elif event.key == pygame.K_UP:
+                    if not grid[bonhomme.y-1][bonhomme.x].is_solid:
+                        bonhomme.go_up()
+                elif event.key == pygame.K_DOWN:
+                    if not grid[bonhomme.y+1][bonhomme.x].is_solid:
+                        bonhomme.go_down()
 
-    # Affichage du score sur l'écran
-    score_text = font.render("Score: {}".format(bonhomme.coins), True, (255, 255, 255))
-    screen.fill(background_color, (10, 10, score_text.get_width(), score_text.get_height()))
-    screen.blit(score_text, (10, 10))
+                # Le nombre de pièces ramassées est comptabilisé
+                if grid[bonhomme.y][bonhomme.x].id == 'c':
+                    bonhomme.coins += 1
 
-    # Affichage du temps restant
-    time_text = font.render("Time: {:02d}".format(game_time_limit - game_time), True, (255, 255, 255))
-    try:
-        time_text_w, time_text_h = old_text_size[0], old_text_size[1]
-    except NameError:
-        time_text_w, time_text_h = time_text.get_width(), time_text.get_height()
-    screen.fill(background_color, (150, 10, time_text_w, time_text_h))
-    screen.blit(time_text, (150, 10))
-    old_text_size = time_text.get_width(), time_text.get_height()
+                # Mettre à jour la grille
+                grid[i_old_player_y][i_old_player_x] = Empty(i_old_player_x, i_old_player_y)
+                grid[bonhomme.y][bonhomme.x] = Player(bonhomme.x, bonhomme.y)
 
+                # Supprime le joueur de son ancienne position
+                player_x, player_y = bonhomme.x * size_x, bonhomme.y * size_y
+                screen.fill(background_color, (old_player_x, old_player_y, player.get_width(), player.get_height()))
+
+                # Afficher l'image du personnage à sa nouvelle position
+                screen.fill(background_color, (player_x, player_y, player.get_width(), player.get_height()))  # Supprime les icônes situées à la nouvelle position du joueur
+                screen.blit(player, (player_x, player_y))
+
+                # Apply gravity
+                old_grid = copy.deepcopy(grid)
+                grid = board.apply_gravity(old_grid)
+                try_gravity(old_grid, grid)
+                print_grid(grid)
+                pygame.display.update()
+
+                board.to_list_grid(grid)
+
+                old_player_x, old_player_y = player_x, player_y
+                i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
+
+        # Affichage du score sur l'écran
+        score_text = font.render("Score: {}".format(bonhomme.coins), True, (255, 255, 255))
+        screen.fill(background_color, (10, 10, score_text.get_width(), score_text.get_height()))
+        screen.blit(score_text, (10, 10))
+
+        # Affichage du temps restant
+        time_text = font.render("Time: {:02d}".format(game_time_limit - game_time), True, (255, 255, 255))
+        try:
+            time_text_w, time_text_h = old_text_size[0], old_text_size[1]
+        except NameError:
+            time_text_w, time_text_h = time_text.get_width(), time_text.get_height()
+
+        screen.fill(background_color, (150, 10, time_text_w, time_text_h))
+        screen.blit(time_text, (150, 10))
+        old_text_size = time_text.get_width(), time_text.get_height()
 
     # Rafraîchir l'écran
     pygame.display.flip()
