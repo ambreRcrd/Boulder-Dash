@@ -6,3 +6,5 @@ Ce qu'il reste à faire:
   - Ajouter une musique
   - Fenêtre de victoire/défaite
   - Conditions de victoire/défaite
+  - Rapport: diagramme de classe + tableau du cahier des charges + les limites du jeu
+  - Faire un vrai readme
