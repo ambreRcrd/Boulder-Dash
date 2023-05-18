@@ -8,3 +8,5 @@ Ce qu'il reste à faire:
   - Conditions de victoire/défaite
   - Rapport: diagramme de classe + tableau du cahier des charges + les limites du jeu
   - Faire un vrai readme
+  - Faire mourir le personnage
+  - Faire des tests unitaires
