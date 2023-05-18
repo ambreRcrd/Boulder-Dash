@@ -10,3 +10,4 @@ Ce qu'il reste à faire:
   - Faire un vrai readme
   - Faire mourir le personnage
   - Faire des tests unitaires
+  - Pouvoir pousser les pierres
