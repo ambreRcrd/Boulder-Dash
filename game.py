@@ -52,6 +52,11 @@ class Player:
     def go_down(self):
         self.y += 1
 
+    def get_coin(self):
+        self.coins += 1
+
+
+
 
 class Diamond:
     def __init__(self, x, y):
