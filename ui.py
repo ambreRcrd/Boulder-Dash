@@ -73,7 +73,7 @@ def print_grid(grid):
 print_grid(grid)
 
 
-def try_gravity(old_grid, grid):
+def try_gravity(old_grid, grid): # à revoir
     '''Mise à jour de l'affichage si la gravité modifie la grille'''
     if old_grid != grid:
         to_erase = board.moved_icone(old_grid, grid)
@@ -96,10 +96,10 @@ QUIT = pygame.QUIT
 def movement_variables():
     global moving_coord
     moving_coord = {
-        KEY_LEFT: (lambda y, x: (y, x - 1), bonhomme.go_left),
-        KEY_RIGHT: (lambda y, x: (y, x + 1), bonhomme.go_right),
-        KEY_UP: (lambda y, x: (y - 1, x), bonhomme.go_up),
-        KEY_DOWN: (lambda y, x: (y + 1, x), bonhomme.go_down)
+        KEY_LEFT: lambda x, y: (x - 1, y),
+        KEY_RIGHT: lambda x, y: (x + 1, y),
+        KEY_UP: lambda x, y: (x, y - 1),
+        KEY_DOWN: lambda x, y: (x, y + 1),
     }
 
 movement_variables()
@@ -107,12 +107,12 @@ movement_variables()
 def move():
     '''Déplace le joueur'''
     moved = False
-    for key, (get_coords, movement) in moving_coord.items():
+    for key, coords in moving_coord.items():
         if event.key == key:
-            y, x = get_coords(bonhomme.y, bonhomme.x)
-            icone = grid[y][x]
+            new_x, new_y = coords(bonhomme.x, bonhomme.y)
+            icone = grid[new_y][new_x]
             if not icone.is_solid:
-                movement()
+                bonhomme.update_position(new_x, new_y)
                 if icone.id == 'c':
                     bonhomme.get_coin()  # Le nombre de pièces ramassées est comptabilisé
                 moved = True
