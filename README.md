@@ -1,7 +1,6 @@
 # Boulder-Dash
 Ce qu'il reste à faire:
   - Corriger bugs écran de pause (Alex)
-  - Corriger les écritures qui clignotent (Ambre) 
   - Center la fenetre sur le joueur losrque le niveau est plus grand que la fenetre
   - Ajouter une musique
   - Fenêtre de victoire/défaite
@@ -11,3 +10,4 @@ Ce qu'il reste à faire:
   - Faire mourir le personnage
   - Faire des tests unitaires
   - Pouvoir pousser les pierres
+  - Corriger l'affichage de la gravité
