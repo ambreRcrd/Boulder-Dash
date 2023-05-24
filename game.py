@@ -148,7 +148,7 @@ class Board:
                         and grid[y][x].is_gravity_affected
                         and grid[y - 1][x].id == ' '
                 ):
-                    to_erase.append([x, y - 1])
+                    to_erase.append([x, (y - 1)])
         return to_erase
 
     def create_grid(self):

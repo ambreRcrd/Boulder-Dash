@@ -68,18 +68,17 @@ def print_grid(grid):
                 image = icons[icone.id]
                 x_coord, y_coord = x * size_x, y * size_y
                 screen.blit(image, (x_coord, y_coord))
-    pygame.display.update()
 
 print_grid(grid)
 
 
-def try_gravity(old_grid, grid): # à revoir
+def try_gravity(old_grid, grid):
     '''Mise à jour de l'affichage si la gravité modifie la grille'''
     if old_grid != grid:
         to_erase = board.moved_icone(old_grid, grid)
-        erase_rects = [pygame.Rect(coord[0] * size_x, coord[1] * size_y, size_x, size_y) for coord in to_erase]
-        for rect in erase_rects:
-            screen.fill(background_color, rect)
+        for coord in to_erase:
+            erase_rect = pygame.Rect(coord[0] * size_x, coord[1] * size_y, size_x, size_y)
+            screen.fill(background_color, erase_rect)
 
 
 '''Constantes de la boucle principale du jeu'''
@@ -151,53 +150,57 @@ start_time = pygame.time.get_ticks() # Temps courant
 while running:
     if game_pause:
         # Boucle de pause
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                running = False
-                break
-            elif event.type == KEYDOWN:
-                if event.key == KEY_SPACE:
+        pause_start = pygame.time.get_ticks()
+        paused_time = 0
+        while game_pause:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    running = False
                     game_pause = False
                     break
+                elif event.type == KEYDOWN:
+                    if event.key == KEY_SPACE:
+                        game_pause = False
+                        pause_end = pygame.time.get_ticks()
+                        paused_time += pause_end - pause_start
+                        start_time += paused_time
+                        break
 
-        if not game_pause:
-            screen.fill(background_color)
-            continue
+            if not game_pause:
+                screen.fill(background_color)
+                continue
 
-        if play_button.draw(screen):
-            game_pause = False
-            screen.fill(background_color)
-            continue
+            if play_button.draw(screen):
+                game_pause = False
+                screen.fill(background_color)
+                continue
 
-        if exit_button.draw(screen):
-            running = False
-            continue
+            if exit_button.draw(screen):
+                running = False
+                game_pause = False
+                continue
 
-        if replay_button.draw(screen):
-            # Réinitialisation du jeu
-            board, grid, bonhomme = import_level("level_test.txt")
-            player_x, player_y = bonhomme.x * size_x, bonhomme.y * size_y
-            old_player_x, old_player_y = player_x, player_y
-            i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
-            print_grid(grid)
-            start_time = pygame.time.get_ticks()
-            game_pause = False
-            screen.fill(background_color)
+            if replay_button.draw(screen): # Réinitialisation du jeu
+                board, grid, bonhomme = import_level("level_test.txt")
+                player_x, player_y = bonhomme.x * size_x, bonhomme.y * size_y
+                old_player_x, old_player_y = player_x, player_y
+                i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
+                print_grid(grid)
+                start_time = pygame.time.get_ticks()
+                game_pause = False
+                screen.fill(background_color)
+                movement_variables()  # Réinitialisation des variables de mouvement
 
-            movement_variables()  # Réinitialisation des variables de mouvement
-
-        pygame.display.update()
+            pygame.display.update()
     else:
-        # Calcul du temps écoulé depuis le début du jeu et vérification si le temps imparti est écoulé
-        game_time = (pygame.time.get_ticks() - start_time) // 1000  # en secondes
-        if game_time >= game_time_limit:
+        game_time = (pygame.time.get_ticks() - start_time) // 1000  # Calcul du temps en secondes écoulé depuis le début du jeu
+        if game_time >= game_time_limit: # Vérification si le temps imparti est écoulé
             running = False
 
         # Apply gravity
         old_grid = copy.deepcopy(grid)
         grid = board.apply_gravity(old_grid)
         try_gravity(old_grid, grid)
-        print_grid(grid)
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -228,12 +231,13 @@ while running:
         old_grid = copy.deepcopy(grid)
         board.apply_gravity(grid)
         try_gravity(old_grid, grid)
+        print_grid(grid)
+        update_score()  # Affichage du score sur l'écran
+        update_time()  # Affichage du temps restant
+        pygame.display.update()
 
         old_player_x, old_player_y = player_x, player_y
         i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
-
-        update_score()  # Affichage du score sur l'écran
-        update_time()  # Affichage du temps restant
 
         pygame.display.flip()  # Rafraîchir l'écran
 
