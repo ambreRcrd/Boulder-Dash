@@ -11,6 +11,7 @@ class Wall:
         self.id = 'w'
         self.is_solid = True
         self.is_gravity_affected = False
+        self.is_pushable = False
 
 class Coin:
     def __init__(self, x, y):
@@ -19,6 +20,7 @@ class Coin:
         self.id = 'c'
         self.is_solid = False # la piece n'est pas solide et peut être traversée
         self.is_gravity_affected = True
+        self.is_pushable = True
 
 class Brick:
     def __init__(self, x, y):
@@ -27,6 +29,7 @@ class Brick:
         self.id = 'b'
         self.is_solid = False  # la brique est solide et ne peut pas être traversée
         self.is_gravity_affected = False  # la brique n'est pas affectée par la gravité
+        self.is_pushable = False
 
 class Player:
     def __init__(self, x, y):
@@ -36,25 +39,16 @@ class Player:
         self.is_solid = True  # le joueur est solide et ne peut pas être traversé
         self.is_gravity_affected = False  # le joueur est affecté par la gravité
         self.coins = 0  # le joueur commence avec 0 diamants
+        self.is_pushable = False
 
     def update_position(self, new_x, new_y):
+        '''Permet de déplacer le joueur'''
         self.x = new_x
         self.y = new_y
 
     def get_coin(self):
+        '''Permet d'augmenter le score de 1 lorsqu'une pièce est ramassée'''
         self.coins += 1
-
-
-class Diamond:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.id = 'd'
-        self.is_solid = False  # le diamant n'est pas solide et peut être traversé
-        self.is_gravity_affected = True  # le diamant est affecté par la gravité
-
-    def gravity_effect(self): # unused
-        self.y -= 1
 
 
 class Stone:
@@ -66,9 +60,6 @@ class Stone:
         self.is_gravity_affected = True  # la pierre est affectée par la gravité
         self.is_pushable = True  # la pierre peut être poussée par le joueur ou d'autres objets
 
-    def gravity_effect(self):
-        self.y -= 1
-
 
 class Empty:
     def __init__(self, x, y):
@@ -77,6 +68,7 @@ class Empty:
         self.id = ' '
         self.is_solid = False  # l'espace vide n'est pas solide et peut être traversé
         self.is_gravity_affected = False  # l'espace vide n'est pas affecté par la gravité
+        self.is_pushable = False
 
 
 class Board:
@@ -95,14 +87,9 @@ class Board:
         self.grid = self.create_grid()
         self.player = Player(self.get_icone_coord('@')[0], self.get_icone_coord('@')[1])  # initialiser le joueur en haut à gauche
 
-    #def update(self):
-    #    # Mettre à jour la position des pièces soumises à la gravité
-    #    for y in range(self.height - 1, -1, -1):  # parcourir les colonnes de bas en haut
-    #        for x in range(self.width):
-    #            if isinstance(self.grid[y][x], Falling):
-    #                self.move_falling_piece(x, y)
 
     def apply_gravity(self, grid):
+        '''Applique la gravité à la grille courante'''
         new_grid = [row[:] for row in grid]  # Créer une copie de la grille originale
 
         for y in range(len(new_grid) - 2, -1, -1):  # Commencer à l'index y = len(new_grid) - 2
@@ -140,6 +127,7 @@ class Board:
         return new_grid
 
     def moved_icone(self, old_grid, grid):
+        '''Renvoie une liste des icônes à supprimer, qui se trouvaient dans l'ancienne grille mais ne le sont plus dans la nouvelle'''
         to_erase = []
         for y in range(1, len(old_grid)):
             for x in range(1, len(old_grid[0])):
@@ -152,6 +140,7 @@ class Board:
         return to_erase
 
     def create_grid(self):
+        '''Charge un niveau et le stocke dans une grille (liste de listes)'''
         with open(self.level_path, "r") as f:
             lines = f.readlines()
 
@@ -169,6 +158,7 @@ class Board:
         return grid
 
     def to_list_grid(self, grid):
+        '''Permet l'affichage de la grille avec les icônes à la place des objets (améliore la lisibilité). Utile seulement pour le développement'''
         nb_lignes = len(grid)
         nb_colonnes = len(grid[0])
         new_grid = np.empty((nb_lignes, nb_colonnes), dtype=object)
@@ -181,91 +171,59 @@ class Board:
         return new_grid.tolist()
 
     def get_icone_coord(self, icone_symb):
+        '''Permet d'accéder aux coordonnées du joueur'''
         for y, row in enumerate(self.grid):
             for x, icone in enumerate(row):
                 if icone.id == icone_symb:
                     return icone.x, icone.y
         return 0, 0
 
-    #def move_falling_piece(self, x, y):
-    #    # Vérifier si la pièce peut tomber d'un cran
-    #    if not self.is_valid_position(x, y + 1):
-    #        return  # la pièce ne peut pas tomber, ne rien faire
-#
-    #    # Faire tomber la pièce d'un cran
-    #    self.grid[x][y + 1] = self.grid[x][y]
-    #    self.grid[x][y] = Empty(x, y)
-#
-    #    # Si la pièce est une pierre et qu'elle est tombée sur un diamant, le collecter
-    #    if isinstance(self.grid[x][y + 1], Diamond):
-    #        self.player.has_diamonds += 1
-    #        self.grid[x][y + 1] = Empty(x, y + 1)
-#
-    #    # Si la pièce est une pierre et qu'elle est tombée sur le joueur, le tuer
-    #    if isinstance(self.grid[x][y + 1], Player):
-    #        self.player.is_alive = False
+    def is_valid_position(self, x, y):
+        '''Vérifie la conformité des coordonnées'''
+        # Vérifier si les coordonnées sont dans les limites du plateau
+        if x < 0 or x >= len(self.grid[0]) or y < 0 or y >= len(self.grid):
+            return False
+        # Vérifier si la case est un mur
+        if isinstance(self.grid[y][x], Wall):
+            return False
 
-    #def is_valid_position(self, x, y):
-    #    # Vérifier si la position est à l'intérieur du plateau
-    #    if x < 0 or x >= self.width or y < 0 or y >= self.height:
-    #        return False
-#
-    #    # Vérifier si la case est traversable
-    #    return not self.grid[x][y].is_solid
+        return True
 
-    #def move_player(self, dx, dy):
-    #    # Vérifier si le mouvement est valide
-    #    new_x = self.player.x + dx
-    #    new_y = self.player.y + dy
-    #    if not self.is_valid_position(new_x, new_y):
-    #        return False  # le mouvement n'est pas valide, retourner False
-#
-    #    # Déplacer le joueur
-    #    self.grid[self.player.x][self.player.y] = Empty(self.player.x, self.player.y)  # effacer la case précédente du joueur
-    #    self.player.x = new_x
-    #    self.player.y = new_y
-    #    self.grid[self.player.x][self.player.y] = self.player  # placer le joueur sur la nouvelle case
-#
-    #    # Si le joueur a collecté un diamant, l'ajouter à son inventaire
-    #    if isinstance(self.grid[self.player.x][self.player.y], Diamond):
-    #        self.player.has_diamonds += 1
-    #        self.grid[self.player.x][self.player.y] = Empty(self.player.x, self.player.y)  # effacer le diamant de la case
-#
-    #    return True  # le mouvement est valide, retourner True
-#
-    #def push_stone(self, dx, dy):
-    #    # Vérifier si le mouvement est valide
-    #    new_x = self.player.x + dx
-    #    new_y = self.player.y + dy
-    #    if not self.is_valid_position(new_x, new_y):
-    #        return False  # le mouvement n'est pas valide, retourner False
-#
-    #    # Vérifier si la case suivante contient une pierre poussable
-    #    if not isinstance(self.grid[new_x][new_y], Stone) or not self.grid[new_x][new_y].is_pushable:
-    #        return False  # la case suivante ne contient pas de pierre poussable, retourner False
-#
-    #    # Vérifier si la case suivante après la pierre est valide
-    #    new_stone_x = new_x + dx
-    #    new_stone_y = new_y + dy
-    #    if not self.is_valid_position(new_stone_x, new_stone_y):
-    #        return False  # la case suivante après la pierre n'est pas valide, retourner False
-#
-    #    # Pousser la pierre
-    #    self.grid[new_stone_x][new_stone_y] = self.grid[new_x][new_y]
-    #    self.grid[new_x][new_y] = Empty(new_x, new_y)
-#
-    #    # Déplacer le joueur
-    #    self.grid[self.player.x][self.player.y] = Empty(self.player.x, self.player.y)  # effacer la case précédente du joueur
-    #    self.player.x = new_x
-    #    self.player.y = new_y
-    #    self.grid[self.player.x][self.player.y] = self.player  # placer le joueur sur la nouvelle case
-#
-    #    # Si le joueur a collecté un diamant, l'ajouter à son inventaire
-    #    if isinstance(self.grid[self.player.x][self.player.y], Diamond):
-    #        self.player.has_diamonds += 1
-    #        self.grid[self.player.x][self.player.y] = Empty(self.player.x, self.player.y)  # effacer le diamant de la case
-#
-    #    return True  # le mouvement est valide, retourner True
+    def push_stone(self, dx, dy):
+        '''Permet au joueur de pousser une pierre'''
+        # Vérifier si le mouvement est valide
+        new_x, new_y = self.player.x + dx, self.player.y + dy
+        if not self.is_valid_position(new_x, new_y):
+            return False  # le mouvement n'est pas valide, retourner False
+
+        # Vérifier si la case suivante contient une pierre poussable
+        if not isinstance(self.grid[new_y][new_x], Stone) or not self.grid[new_y][new_x].is_pushable:
+            print(2)
+            return False  # la case suivante ne contient pas de pierre poussable, retourner False
+
+        # Vérifier si la case suivante après la pierre est valide
+        new_stone_x = new_x + dx
+        new_stone_y = new_y + dy
+        if not self.is_valid_position(new_stone_x, new_stone_y):
+            print(3)
+            return False  # la case suivante après la pierre n'est pas valide, retourner False
+
+        # Pousser la pierre
+        self.grid[new_stone_y][new_stone_x] = self.grid[new_y][new_x]
+        self.grid[new_y][new_x] = Empty(new_y, new_x)
+
+        # Déplacer le joueur
+        self.grid[self.player.y][self.player.x] = Empty(self.player.x, self.player.y)  # effacer la case précédente du joueur
+        self.player.x = new_x
+        self.player.y = new_y
+        self.grid[self.player.y][self.player.x] = self.player  # placer le joueur sur la nouvelle case
+
+        # Si le joueur a collecté une pièce, l'ajouter à son inventaire
+        if isinstance(self.grid[self.player.y][self.player.x], Coin):
+            self.player.get_coin()
+            self.grid[self.player.y][self.player.x] = Empty(self.player.x, self.player.y)  # effacer la pièce de la case
+
+        return True  # le mouvement est valide, retourner True
 
     def center_view(self, view_width, view_height):
         # Calculer les coordonnées pour centrer la vue sur le joueur

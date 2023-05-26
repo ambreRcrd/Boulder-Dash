@@ -110,12 +110,23 @@ def move():
         if event.key == key:
             new_x, new_y = coords(bonhomme.x, bonhomme.y)
             icone = grid[new_y][new_x]
-            if not icone.is_solid:
+
+            if isinstance(icone, Stone):
+                # Tentative de pousser une pierre
+                dx, dy = new_x - bonhomme.x, new_y - bonhomme.y
+                pushed = board.push_stone(dx, dy)
+                if pushed:
+                    bonhomme.update_position(new_x, new_y)
+                    moved = True
+                break
+
+            elif not icone.is_solid:
                 bonhomme.update_position(new_x, new_y)
                 if icone.id == 'c':
                     bonhomme.get_coin()  # Le nombre de pièces ramassées est comptabilisé
                 moved = True
                 break
+
     return moved
 
 
