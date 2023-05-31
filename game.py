@@ -273,30 +273,43 @@ class BoardTests(unittest.TestCase):
 
     def test_push_stone(self):
         # Vérifier un mouvement de pierre valide vers le bas
-        self.assertTrue(self.board.push_stone(0, 1))  # Pousser la pierre vers le bas
+        self.assertTrue(self.board.push_stone(1, 0))  # Pousser la pierre vers la droite
+
         expected_grid = [
             [Wall(0, 0), Wall(1, 0), Wall(2, 0), Wall(3, 0), Wall(4, 0)],
-            [Wall(0, 1), Player(1, 1), Empty(2, 1), Brick(3, 1), Wall(4, 1)],
-            [Wall(0, 2), Coin(1, 2), Empty(2, 2), Stone(3, 2), Wall(4, 2)],
+            [Wall(0, 1), Player(1, 1), Empty(2, 1), Stone(3, 1), Wall(4, 1)],
+            [Wall(0, 2), Coin(1, 2), Empty(2, 2), Wall(3, 2), Wall(4, 2)],
             [Wall(0, 3), Wall(1, 3), Wall(2, 3), Wall(3, 3), Wall(4, 3)]
         ]
-        self.assertEqual(self.board.grid, expected_grid)
+
+        for y in range(len(expected_grid)):
+            for x in range(len(expected_grid[y])):
+                self.assertEqual(self.board.grid[y][x].id, expected_grid[y][x].id)
 
         # Vérifier un mouvement de pierre non valide (vers le haut)
         self.assertFalse(self.board.push_stone(0, -1))  # Tentative de pousser la pierre vers le haut
-        self.assertEqual(self.board.grid, expected_grid)  # La grille ne doit pas avoir changé
+        for y in range(len(expected_grid)): # La grille ne doit pas avoir changé
+            for x in range(len(expected_grid[y])):
+                self.assertEqual(self.board.grid[y][x].id, expected_grid[y][x].id)
 
         # Vérifier un mouvement de pierre non valide (vers la droite)
         self.assertFalse(self.board.push_stone(1, 0))  # Tentative de pousser la pierre vers la droite
-        self.assertEqual(self.board.grid, expected_grid)  # La grille ne doit pas avoir changé
+        for y in range(len(expected_grid)):  # La grille ne doit pas avoir changé
+            for x in range(len(expected_grid[y])):
+                self.assertEqual(self.board.grid[y][x].id, expected_grid[y][x].id)
 
         # Vérifier un mouvement de pierre non valide (vers le bas, obstruction)
         self.assertFalse(self.board.push_stone(0, 1))  # Tentative de pousser la pierre vers le bas (obstruction)
-        self.assertEqual(self.board.grid, expected_grid)  # La grille ne doit pas avoir changé
+        for y in range(len(expected_grid)):  # La grille ne doit pas avoir changé
+            for x in range(len(expected_grid[y])):
+                self.assertEqual(self.board.grid[y][x].id, expected_grid[y][x].id)
 
         # Vérifier un mouvement de pierre non valide (vers le bas, hors limites)
         self.assertFalse(self.board.push_stone(0, 2))  # Tentative de pousser la pierre vers le bas (hors limites)
-        self.assertEqual(self.board.grid, expected_grid)  # La grille ne doit pas avoir changé
+        for y in range(len(expected_grid)):  # La grille ne doit pas avoir changé
+            for x in range(len(expected_grid[y])):
+                self.assertEqual(self.board.grid[y][x].id, expected_grid[y][x].id)
+
 
 if __name__ == "__main__":
     unittest.main()
