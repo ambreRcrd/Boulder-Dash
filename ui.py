@@ -27,6 +27,7 @@ def import_level(level_path):
     board.to_list_grid(grid)  # Affichage python de la grille
     return board, grid, board.player
 
+
 board, grid, bonhomme = import_level("level_test.txt")
 
 
@@ -53,6 +54,7 @@ i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y # Coordonnées indiciell
 
 '''Icônes du menu de pause'''
 defeat_image = pygame.image.load("defeat.png")
+victory_image = pygame.image.load("victory.png")
 play_img = pygame.image.load("play_bouton.png").convert_alpha() #Chargement des images bouton
 replay_img = pygame.image.load("replay_bouton.png").convert_alpha()
 exit_img = pygame.image.load("exit_bouton.png").convert_alpha()
@@ -150,12 +152,19 @@ def update_time():
     screen.fill(background_color, time_text_rect)
     screen.blit(time_text, time_text_rect)
 
+def level_up(levelnumber,levelpath2,levelpath3):
+    if levelnumber == 1:
+        return import_level(levelpath2)
+    if levelnumber == 2:
+         return import_level(levelpath3)
+
 
 '''Initialisations'''
 running = True # Le jeu tourne
 game_pause = False # Le jeu n'est pas mis en pause
 game_defeat = False
 
+levelnumber = 1
 game_time = 0 # Initialisation du temps
 game_time_limit = 110 # Temps de jeu
 start_time = pygame.time.get_ticks() # Temps courant
@@ -242,12 +251,21 @@ while running:
                     move()
                     grid = board.grid
 
-        if game_defeat == True:     #si le joueur perd
-            screen.fill((0, 0, 0))
-            pygame.display.update()
-            screen.blit(defeat_image, (0, 0))
-            if defeat_button.draw(screen):
-                running = False
+        if game_defeat:  # si le joueur perd
+            pygame.mixer.music.pause()
+            death_sound.play()
+            while running:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        running = False  # Quitter la boucle si l'utilisateur ferme la fenêtre
+                screen.fill((0, 0, 0))
+                screen.blit(defeat_image, (0, 0))
+                if defeat_button.draw(screen):
+                    running = False
+                    game_pause = False
+                    continue
+                pygame.display.update()
+                pygame.display.flip()
 
         # Mettre à jour la grille
         grid[i_old_player_y][i_old_player_x] = Empty(i_old_player_x, i_old_player_y)
@@ -256,10 +274,26 @@ while running:
         elif grid[bonhomme.y][bonhomme.x].id == 'b':
             brick_sound.play()
         elif grid[bonhomme.y][bonhomme.x].id == 't':
+            if levelnumber == 3:
+                pygame.mixer.music.pause()
+                victory_sound.play()
+                while running:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            running = False  # Quitter la boucle si l'utilisateur ferme la fenêtre
+                    screen.fill((0, 0, 0))
+                    screen.blit(victory_image, (0, 0))
+                    if defeat_button.draw(screen):
+                        running = False
+                        game_pause = False
+                        continue
+                    pygame.display.update()
+                    pygame.display.flip()
             goldcoins = bonhomme.coins
             timebtrap = game_time
             trap_sound.play()
-            board, grid, bonhomme = import_level("level_test2.txt")
+            board, grid, bonhomme = level_up(levelnumber,"level_test2.txt","level_test3.txt")
+            levelnumber += 1
             player_x, player_y = bonhomme.x * size_x, bonhomme.y * size_y
             old_player_x, old_player_y = player_x, player_y
             i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
@@ -269,6 +303,7 @@ while running:
             game_pause = False
             screen.fill(background_color)
             movement_variables()  # Réinitialisation des variables de mouvement
+
 
 
         grid[bonhomme.y][bonhomme.x] = Player(bonhomme.x, bonhomme.y)
