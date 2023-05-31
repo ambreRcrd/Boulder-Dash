@@ -110,7 +110,7 @@ class Board:
         to_erase = []
         for y in range(len(old_grid)):
             for x in range(len(old_grid[0])):
-                if old_grid[y][x] != grid[y][x]:
+                if old_grid[y][x].id != grid[y][x].id:
                     to_erase.append([x, y])  # Ajouter les coordonnées de l'icône à supprimer
         return to_erase
 
@@ -203,70 +203,100 @@ class Board:
 
 class BoardTests(unittest.TestCase):
     def setUp(self):
-        self.board = Board(10, 10, "level_test.txt")
-
-    def test_apply_gravity(self):
-        grid = [
-            [Empty(0, 0), Empty(1, 0), Empty(2, 0)],
-            [Empty(0, 1), Stone(1, 1), Empty(2, 1)],
-            [Empty(0, 2), Empty(1, 2), Empty(2, 2)]
-        ]
-        expected_grid = [
-            [Empty(0, 0), Empty(1, 0), Empty(2, 0)],
-            [Empty(0, 1), Empty(1, 1), Empty(2, 1)],
-            [Empty(0, 2), Stone(1, 2), Empty(2, 2)]
-        ]
-        result = self.board.apply_gravity(grid)
-        self.assertEqual(self.board.to_list_grid(result), self.board.to_list_grid(expected_grid))
-
-    def test_moved_icone(self):
-        old_grid = [
-            [Empty(0, 0), Stone(1, 0), Empty(2, 0)],
-            [Empty(0, 1), Empty(1, 1), Empty(2, 1)],
-            [Empty(0, 2), Empty(1, 2), Empty(2, 2)]
-        ]
-        new_grid = [
-            [Empty(0, 0), Empty(1, 0), Empty(2, 0)],
-            [Empty(0, 1), Stone(1, 1), Empty(2, 1)],
-            [Empty(0, 2), Empty(1, 2), Empty(2, 2)]
-        ]
-        expected_result = [[1, 0]]
-        result = self.board.moved_icone(old_grid, new_grid)
-        self.assertEqual(result, expected_result)
+        self.board = Board(5, 4, "level_test_unitaire.txt")
 
     def test_create_grid(self):
         expected_grid = [
-            [Wall(0, 0), Wall(1, 0), Wall(2, 0)],
-            [Empty(0, 1), Player(1, 1), Empty(2, 1)],
-            [Empty(0, 2), Empty(1, 2), Empty(2, 2)]
+            [Wall(0, 0), Wall(1, 0), Wall(2, 0), Wall(3, 0), Wall(4, 0)],
+            [Wall(0, 1), Player(1, 1), Stone(2, 1), Brick(3, 1), Wall(4, 1)],
+            [Wall(0, 2), Coin(1, 2), Empty(2, 2), Wall(3, 2), Wall(4, 2)],
+            [Wall(0, 3), Wall(1, 3), Wall(2, 3), Wall(3, 3), Wall(4, 3)]
         ]
-        self.assertEqual(self.board.to_list_grid(self.board.grid), self.board.to_list_grid(expected_grid))
+        actual_grid = self.board.grid
+
+        for y in range(len(actual_grid)):
+            for x in range(len(actual_grid[y])):
+                self.assertEqual(actual_grid[y][x].id, expected_grid[y][x].id)
+
+    def test_apply_gravity(self):
+        grid = [
+            [Wall(0, 0), Wall(1, 0), Wall(2, 0), Wall(3, 0), Wall(4, 0)],
+            [Wall(0, 1), Player(1, 1), Stone(2, 1), Brick(3, 1), Wall(4, 1)],
+            [Wall(0, 2), Coin(1, 2), Empty(2, 2), Wall(3, 2), Wall(4, 2)],
+            [Wall(0, 3), Wall(1, 3), Wall(2, 3), Wall(3, 3), Wall(4, 3)]
+        ]
+        expected_grid = [
+            [Wall(0, 0), Wall(1, 0), Wall(2, 0), Wall(3, 0), Wall(4, 0)],
+            [Wall(0, 1), Player(1, 1), Empty(2, 1), Brick(3, 1), Wall(4, 1)],
+            [Wall(0, 2), Coin(1, 2), Stone(2, 2), Wall(3, 2), Wall(4, 2)],
+            [Wall(0, 3), Wall(1, 3), Wall(2, 3), Wall(3, 3), Wall(4, 3)]
+        ]
+        result = self.board.apply_gravity(grid)
+
+        for y in range(len(result)):
+            for x in range(len(result[y])):
+                self.assertEqual(result[y][x].id, expected_grid[y][x].id)
+
+    def test_moved_icone(self):
+        old_grid = [
+            [Wall(0, 0), Wall(1, 0), Wall(2, 0), Wall(3, 0), Wall(4, 0)],
+            [Wall(0, 1), Player(1, 1), Stone(2, 1), Brick(3, 1), Wall(4, 1)],
+            [Wall(0, 2), Coin(1, 2), Empty(2, 2), Wall(3, 2), Wall(4, 2)],
+            [Wall(0, 3), Wall(1, 3), Wall(2, 3), Wall(3, 3), Wall(4, 3)]
+        ]
+        new_grid = [
+            [Wall(0, 0), Wall(1, 0), Wall(2, 0), Wall(3, 0), Wall(4, 0)],
+            [Wall(0, 1), Player(1, 1), Empty(2, 1), Brick(3, 1), Wall(4, 1)],
+            [Wall(0, 2), Coin(1, 2), Stone(2, 2), Wall(3, 2), Wall(4, 2)],
+            [Wall(0, 3), Wall(1, 3), Wall(2, 3), Wall(3, 3), Wall(4, 3)]
+        ]
+        expected_result = [[2, 1], [2, 2]]
+        result = self.board.moved_icone(old_grid, new_grid)
+        self.assertEqual(result, expected_result)
 
     def test_get_icone_coord(self):
         x, y = self.board.get_icone_coord('@')
-        self.assertEqual(x, 2)
-        self.assertEqual(y, 6)
+        self.assertEqual(x, 1)
+        self.assertEqual(y, 1)
 
     def test_is_valid_position(self):
-        result1 = self.board.is_valid_position(0, 0)
-        result2 = self.board.is_valid_position(1, 1)
-        result3 = self.board.is_valid_position(2, 2)
-        self.assertTrue(result1)
-        self.assertTrue(result2)
-        self.assertTrue(result3)
+        # Vérifier des positions valides
+        self.assertTrue(self.board.is_valid_position(2, 1))  # Position vide
+        self.assertTrue(self.board.is_valid_position(1, 2))  # Pièce
+
+        # Vérifier des positions invalides
+        self.assertFalse(self.board.is_valid_position(-1, 2))  # Position en dehors du plateau (gauche)
+        self.assertFalse(self.board.is_valid_position(5, 2))  # Position en dehors du plateau (droite)
+        self.assertFalse(self.board.is_valid_position(2, -1))  # Position en dehors du plateau (haut)
+        self.assertFalse(self.board.is_valid_position(2, 4))  # Position en dehors du plateau (bas)
+        self.assertFalse(self.board.is_valid_position(0, 2))  # Position contenant un mur (non valide)
 
     def test_push_stone(self):
-        self.assertFalse(self.board.push_stone(-1, 0))
-        self.assertFalse(self.board.push_stone(0, -1))
-        self.assertFalse(self.board.push_stone(1, 0))
-        self.assertTrue(self.board.push_stone(0, 1))
+        # Vérifier un mouvement de pierre valide vers le bas
+        self.assertTrue(self.board.push_stone(0, 1))  # Pousser la pierre vers le bas
         expected_grid = [
-            [Empty(0, 0), Stone(1, 0), Empty(2, 0)],
-            [Empty(0, 1), Player(1, 1), Empty(2, 1)],
-            [Empty(0, 2), Empty(1, 2), Empty(2, 2)]
+            [Wall(0, 0), Wall(1, 0), Wall(2, 0), Wall(3, 0), Wall(4, 0)],
+            [Wall(0, 1), Player(1, 1), Empty(2, 1), Brick(3, 1), Wall(4, 1)],
+            [Wall(0, 2), Coin(1, 2), Empty(2, 2), Stone(3, 2), Wall(4, 2)],
+            [Wall(0, 3), Wall(1, 3), Wall(2, 3), Wall(3, 3), Wall(4, 3)]
         ]
         self.assertEqual(self.board.grid, expected_grid)
 
+        # Vérifier un mouvement de pierre non valide (vers le haut)
+        self.assertFalse(self.board.push_stone(0, -1))  # Tentative de pousser la pierre vers le haut
+        self.assertEqual(self.board.grid, expected_grid)  # La grille ne doit pas avoir changé
+
+        # Vérifier un mouvement de pierre non valide (vers la droite)
+        self.assertFalse(self.board.push_stone(1, 0))  # Tentative de pousser la pierre vers la droite
+        self.assertEqual(self.board.grid, expected_grid)  # La grille ne doit pas avoir changé
+
+        # Vérifier un mouvement de pierre non valide (vers le bas, obstruction)
+        self.assertFalse(self.board.push_stone(0, 1))  # Tentative de pousser la pierre vers le bas (obstruction)
+        self.assertEqual(self.board.grid, expected_grid)  # La grille ne doit pas avoir changé
+
+        # Vérifier un mouvement de pierre non valide (vers le bas, hors limites)
+        self.assertFalse(self.board.push_stone(0, 2))  # Tentative de pousser la pierre vers le bas (hors limites)
+        self.assertEqual(self.board.grid, expected_grid)  # La grille ne doit pas avoir changé
 
 if __name__ == "__main__":
     unittest.main()
