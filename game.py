@@ -88,11 +88,52 @@ class Board:
         self.player = Player(self.get_icone_coord('@')[0], self.get_icone_coord('@')[1])  # initialiser le joueur en haut à gauche
 
 
+    #def apply_gravity(self, grid):
+    #    '''Applique la gravité à la grille courante'''
+    #    new_grid = [row[:] for row in grid]  # Créer une copie de la grille originale
+#
+    #    for y in range(len(new_grid) - 2, -1, -1):  # Commencer à l'index y = len(new_grid) - 2
+    #        for x in range(len(new_grid[0])):
+    #            # Si la case contient une pierre
+    #            if new_grid[y][x].is_gravity_affected:
+    #                # Si la case en dessous est vide
+    #                if new_grid[y + 1][x].id == " ":
+    #                    # La pierre tombe d'une case
+    #                    icone = new_grid[y][x].id
+    #                    class_corres = self.class_correspondings[icone]
+    #                    new_grid[y + 1][x] = class_corres(x, y + 1)
+    #                    new_grid[y][x] = Empty(x, y)
+#
+    #    # Vérifier si d'autres éléments peuvent tomber après le premier passage
+    #    has_fallen = True
+    #    while has_fallen:
+    #        has_fallen = False
+    #        for y in range(len(new_grid) - 2, -1, -1):  # Commencer à l'index y = len(new_grid) - 2
+    #            for x in range(len(new_grid[0])):
+    #                # Si la case contient une pierre
+    #                if new_grid[y][x].is_gravity_affected:
+    #                    # Si la case en dessous est vide
+    #                    if new_grid[y + 1][x].id == " ":
+    #                        # La pierre tombe d'une case
+    #                        icone = new_grid[y][x].id
+    #                        class_corres = self.class_correspondings[icone]
+    #                        new_grid[y + 1][x] = class_corres(x, y + 1)
+    #                        new_grid[y][x] = Empty(x, y)
+    #                        has_fallen = True
+    #                        break
+    #            if has_fallen:
+    #                break
+#
+    #    return new_grid
+
     def apply_gravity(self, grid):
         '''Applique la gravité à la grille courante'''
         new_grid = [row[:] for row in grid]  # Créer une copie de la grille originale
 
-        for y in range(len(new_grid) - 2, -1, -1):  # Commencer à l'index y = len(new_grid) - 2
+        def gravity_helper(y):
+            if y >= len(new_grid) - 1:
+                return
+
             for x in range(len(new_grid[0])):
                 # Si la case contient une pierre
                 if new_grid[y][x].is_gravity_affected:
@@ -104,40 +145,21 @@ class Board:
                         new_grid[y + 1][x] = class_corres(x, y + 1)
                         new_grid[y][x] = Empty(x, y)
 
-        # Vérifier si d'autres éléments peuvent tomber après le premier passage
-        has_fallen = True
-        while has_fallen:
-            has_fallen = False
-            for y in range(len(new_grid) - 2, -1, -1):  # Commencer à l'index y = len(new_grid) - 2
-                for x in range(len(new_grid[0])):
-                    # Si la case contient une pierre
-                    if new_grid[y][x].is_gravity_affected:
-                        # Si la case en dessous est vide
-                        if new_grid[y + 1][x].id == " ":
-                            # La pierre tombe d'une case
-                            icone = new_grid[y][x].id
-                            class_corres = self.class_correspondings[icone]
-                            new_grid[y + 1][x] = class_corres(x, y + 1)
-                            new_grid[y][x] = Empty(x, y)
-                            has_fallen = True
-                            break
-                if has_fallen:
-                    break
+            gravity_helper(y + 1)
 
+        gravity_helper(0)
         return new_grid
+
 
     def moved_icone(self, old_grid, grid):
         '''Renvoie une liste des icônes à supprimer, qui se trouvaient dans l'ancienne grille mais ne le sont plus dans la nouvelle'''
         to_erase = []
-        for y in range(1, len(old_grid)):
-            for x in range(1, len(old_grid[0])):
-                if (
-                        old_grid[y][x] != grid[y][x]
-                        and grid[y][x].is_gravity_affected
-                        and grid[y - 1][x].id == ' '
-                ):
-                    to_erase.append([x, (y - 1)])
+        for y in range(len(old_grid)):
+            for x in range(len(old_grid[0])):
+                if old_grid[y][x] != grid[y][x]:
+                    to_erase.append([x, y])  # Ajouter les coordonnées de l'icône à supprimer
         return to_erase
+
 
     def create_grid(self):
         '''Charge un niveau et le stocke dans une grille (liste de listes)'''
@@ -188,6 +210,7 @@ class Board:
 
         return True
 
+
     def push_stone(self, dx, dy):
         '''Permet au joueur de pousser une pierre'''
         # Vérifier si le mouvement est valide
@@ -199,11 +222,15 @@ class Board:
         if not isinstance(self.grid[new_y][new_x], Stone) or not self.grid[new_y][new_x].is_pushable:
             return False  # la case suivante ne contient pas de pierre poussable, retourner False
 
+        # Vérifier la direction du mouvement
+        if dy < 0:
+            return False  # le mouvement vers le haut n'est pas autorisé
+
         # Vérifier si la case suivante après la pierre est valide
         new_stone_x = new_x + dx
         new_stone_y = new_y + dy
-        if not self.is_valid_position(new_stone_x, new_stone_y) or isinstance(self.grid[new_stone_y][new_stone_x], Stone) or isinstance(self.grid[new_stone_y][new_stone_x], Brick):
-            return False  # la case suivante après la pierre n'est pas valide ou est une pierre, retourner False
+        if not self.is_valid_position(new_stone_x, new_stone_y) or isinstance(self.grid[new_stone_y][new_stone_x], Stone):
+            return False  # la case suivante après la pierre n'est pas valide, retourner False
 
         # Pousser la pierre
         self.grid[new_stone_y][new_stone_x] = Stone(new_stone_x, new_stone_y)
@@ -211,15 +238,17 @@ class Board:
 
         return True  # le mouvement est valide, retourner True
 
+
     def center_view(self, view_width, view_height):
         # Calculer les coordonnées pour centrer la vue sur le joueur
         pass
 
+
 class TestBoard(unittest.TestCase):
     def setUp(self):
         self.board = Board(5, 5, level_path)
-        self.board.grid[1][1] = Coin(1, 1) #Coin(1, 1, 1)
-        self.board.grid[3][3] = Coin(3, 3) #Coin(3, 3, 2)
+        self.board.grid[1][1] = Coin(1, 1)
+        self.board.grid[3][3] = Coin(3, 3)
 
     def test_piece_positions(self):
         self.assertEqual(self.board.grid[1][1].x, 1)
@@ -227,6 +256,20 @@ class TestBoard(unittest.TestCase):
         self.assertEqual(self.board.grid[3][3].x, 3)
         self.assertEqual(self.board.grid[3][3].y, 3)
 
-    #def test_piece_ids(self):
-    #    self.assertEqual(self.board.grid[1][1].id, 1)
-    #    self.assertEqual(self.board.grid[3][3].id, 2)
+    def test_push_stone_valid_movement(self):
+        self.board.player.x = 2
+        self.board.player.y = 2
+        self.assertTrue(self.board.push_stone(1, 0))
+        self.assertIsInstance(self.board.grid[2][3], Stone)
+        self.assertIsInstance(self.board.grid[2][2], Empty)
+
+    def test_push_stone_invalid_movement(self):
+        self.board.player.x = 2
+        self.board.player.y = 2
+        self.assertFalse(self.board.push_stone(-1, 0))  # Invalid direction
+        self.assertFalse(self.board.push_stone(0, 1))   # Not a pushable stone
+        self.assertFalse(self.board.push_stone(1, 1))   # Stone movement blocked
+
+
+if __name__ == '__main__':
+    unittest.main()

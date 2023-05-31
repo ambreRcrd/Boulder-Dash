@@ -72,8 +72,8 @@ def print_grid(grid):
 print_grid(grid)
 
 
-def try_gravity(old_grid, grid):
-    '''Mise à jour de l'affichage si la gravité modifie la grille'''
+def update_grid(old_grid, grid):
+    '''Mise à jour de l'affichage de la grille'''
     if old_grid != grid:
         to_erase = board.moved_icone(old_grid, grid)
         for coord in to_erase:
@@ -102,6 +102,7 @@ def movement_variables():
     }
 
 movement_variables()
+
 
 def move():
     '''Déplace le joueur'''
@@ -213,7 +214,7 @@ while running:
         # Apply gravity
         old_grid = copy.deepcopy(grid)
         grid = board.apply_gravity(old_grid)
-        try_gravity(old_grid, grid)
+        update_grid(old_grid, grid)
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -225,6 +226,7 @@ while running:
                 elif event.key in moving_coord.keys():
                     move()
                     grid = board.grid
+                    board.to_list_grid(grid)
 
         # Mettre à jour la grille
         grid[i_old_player_y][i_old_player_x] = Empty(i_old_player_x, i_old_player_y)
@@ -239,7 +241,7 @@ while running:
         # Apply gravity
         old_grid = copy.deepcopy(grid)
         grid = board.apply_gravity(old_grid)
-        try_gravity(old_grid, grid)
+        update_grid(old_grid, grid)
 
         print_grid(grid)
         update_score()  # Affichage du score sur l'écran
