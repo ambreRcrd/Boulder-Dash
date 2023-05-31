@@ -5,55 +5,51 @@ import unittest
 level_path = "level_test.txt" # Import d'un niveau
 
 
-class Wall:
-    def __init__(self, x, y):
+class Icone:
+    def __init__(self, x, y, id, is_solid, is_gravity_affected, is_pushable):
         self.x = x
         self.y = y
-        self.id = 'w'
-        self.is_solid = True # Le mur est solide et ne peut pas être traversé
-        self.is_gravity_affected = False # Le mur n'est pas affecté par la gravité
-        self.is_pushable = False # Le mur ne peut pas être poussé
+        self.id = id
+        self.is_solid = is_solid # Détermine si l'icône peut être traversée (booléen)
+        self.is_gravity_affected = is_gravity_affected # Détermine si l'icône est affectée par la gravité (booléen)
+        self.is_pushable = is_pushable # Détermine si l'icône peut être poussée (booléen)
 
 
-class Trap:
+class Wall(Icone):
     def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.id = 't'
-        self.is_solid = False
-        self.is_gravity_affected = False
-        self.is_pushable = False
+        super().__init__(x, y, 'w', True, False, False)
 
 
-class Coin:
+class Trap(Icone):
     def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.id = 'c'
-        self.is_solid = False
-        self.is_gravity_affected = True
-        self.is_pushable = True
+        super().__init__(x, y, 't', False, False, False)
 
 
-class Brick:
+class Coin(Icone):
     def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.id = 'b'
-        self.is_solid = False
-        self.is_gravity_affected = False
-        self.is_pushable = False
+        super().__init__(x, y, 'c', False, True, True)
 
-class Player:
+
+class Brick(Icone):
     def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.id = '@'
-        self.is_solid = True
-        self.is_gravity_affected = False
-        self.is_pushable = False
+        super().__init__(x, y, 'b', False, False, False)
 
-        self.coins = 0  # le joueur commence avec 0 diamants
+
+class Stone(Icone):
+    def __init__(self, x, y):
+        super().__init__(x, y, 's', True, True, True)
+
+
+
+class Empty(Icone):
+    def __init__(self, x, y):
+        super().__init__(x, y, ' ', False, False, False)
+
+
+class Player(Icone):
+    def __init__(self, x, y):
+        super().__init__(x, y, '@', True, False, False)
+        self.coins = 0 # le joueur commence avec 0 diamants
 
     def update_position(self, new_x, new_y):
         """
@@ -67,26 +63,6 @@ class Player:
         Permet d'augmenter le score de 1 lorsqu'une pièce est ramassée
         """
         self.coins += 1
-
-
-class Stone:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.id = 's'
-        self.is_solid = True
-        self.is_gravity_affected = True
-        self.is_pushable = True
-
-
-class Empty:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.id = ' '
-        self.is_solid = False
-        self.is_gravity_affected = False
-        self.is_pushable = False
 
 
 class Board:

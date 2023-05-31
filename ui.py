@@ -21,7 +21,9 @@ font = pygame.font.Font(None, 36) # Chargement de la police
 
 
 def import_level(level_path):
-    '''Importation d'un niveau'''
+    """
+    Import d'un niveau
+    """
     board = Board(screen_width, screen_height, level_path)
     grid = board.grid
     board.apply_gravity(grid)  # On applique la gravité au niveau avant même que le jeu commence
@@ -29,7 +31,6 @@ def import_level(level_path):
     return board, grid, board.player
 
 board, grid, bonhomme = import_level("level_test2.txt")
-board, grid, bonhomme = import_level("level_test.txt")
 text_input = pygame_textinput.TextInputManager
 
 
@@ -77,7 +78,9 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS scores
 
 
 def print_grid(grid):
-    '''Affichage de la grille'''
+    """
+    Affichage de la grille
+    """
     for y, row in enumerate(grid):
         for x, icone in enumerate(row):
             if icone.id != ' ':
@@ -89,7 +92,9 @@ print_grid(grid)
 
 
 def update_grid(old_grid, grid):
-    '''Mise à jour de l'affichage de la grille'''
+    """
+    Mise à jour de l'affichage de la grille
+    """
     if old_grid != grid:
         to_erase = board.moved_icone(old_grid, grid)
         for coord in to_erase:
@@ -107,10 +112,12 @@ KEYDOWN = pygame.KEYDOWN
 QUIT = pygame.QUIT
 
 
-'''Gestion des dépalcements du joueur'''
+'''Gestion des déplacements du joueur'''
 
 def movement_variables():
-    '''Met à jour les coordonnées selon le mouvement effectué'''
+    """
+    Met à jour les coordonnées selon le mouvement effectué
+    """
     global moving_coord
     moving_coord = {
         KEY_LEFT: lambda x, y: (x - 1, y),
@@ -123,7 +130,9 @@ movement_variables()
 
 
 def move():
-    '''Déplace le joueur'''
+    """
+    Déplace le joueur
+    """
     moved = False
     for key, coords in moving_coord.items():
         if event.key == key:
@@ -150,14 +159,18 @@ def move():
 
 
 def update_score():
-    '''Met à jour le score du joueur'''
+    """
+    Met à jour le score du joueur
+    """
     score_text = font.render("Score: {}".format(bonhomme.coins), True, (255, 255, 255))
     screen.fill(background_color, (10, 10, score_text.get_width(), score_text.get_height()))
     screen.blit(score_text, (10, 10))
 
 
 def update_time():
-    '''Met à jour le temps restant'''
+    """
+    Met à jour le temps restant
+    """
     game_time = (pygame.time.get_ticks() - start_time) // 1000
     time_remaining = game_time_limit - game_time
     time_text = font.render("Time: {:02d}".format(time_remaining), True, (255, 255, 255))
@@ -168,7 +181,9 @@ def update_time():
 
 
 def level_up(levelnumber,levelpath2,levelpath3):
-    '''Passe au niveau suivant lorsque l'un est complété'''
+    """
+    Passe au niveau suivant lorsque l'un est complété
+    """
     if levelnumber == 1:
         return import_level(levelpath2)
     if levelnumber == 2:
@@ -306,7 +321,6 @@ while running:
     else:
         game_time = (pygame.time.get_ticks() - start_time) // 1000  # Calcul du temps en secondes écoulé depuis le début du jeu
         if game_time >= game_time_limit: # Vérification si le temps imparti est écoulé
-            #running = False
             game_defeat = True
 
         # Apply gravity
