@@ -203,7 +203,8 @@ class Board:
 
 class BoardTests(unittest.TestCase):
     def setUp(self):
-        self.board = Board(5, 4, "level_test_unitaire.txt")
+        self.board_1 = Board(5, 4, "level_test_unitaire1.txt")
+        self.board_2 = Board(3, 3, "level_test_unitaire2.txt")
 
     def test_create_grid(self):
         expected_grid = [
@@ -212,7 +213,18 @@ class BoardTests(unittest.TestCase):
             [Wall(0, 2), Coin(1, 2), Empty(2, 2), Wall(3, 2), Wall(4, 2)],
             [Wall(0, 3), Wall(1, 3), Wall(2, 3), Wall(3, 3), Wall(4, 3)]
         ]
-        actual_grid = self.board.grid
+        actual_grid = self.board_1.grid # Premier cas testé
+
+        for y in range(len(actual_grid)):
+            for x in range(len(actual_grid[y])):
+                self.assertEqual(actual_grid[y][x].id, expected_grid[y][x].id)
+
+        expected_grid = [
+            [Wall(0, 0), Wall(1, 0), Wall(2, 0)],
+            [Wall(0, 1), Player(1, 1), Wall(2, 1)],
+            [Wall(0, 2), Wall(1, 2), Wall(2, 3)]
+        ]
+        actual_grid = self.board_2.grid # Deuxième cas testé
 
         for y in range(len(actual_grid)):
             for x in range(len(actual_grid[y])):
@@ -231,7 +243,25 @@ class BoardTests(unittest.TestCase):
             [Wall(0, 2), Coin(1, 2), Stone(2, 2), Wall(3, 2), Wall(4, 2)],
             [Wall(0, 3), Wall(1, 3), Wall(2, 3), Wall(3, 3), Wall(4, 3)]
         ]
-        result = self.board.apply_gravity(grid)
+        result = self.board_1.apply_gravity(grid) # Premier cas testé
+
+        for y in range(len(result)):
+            for x in range(len(result[y])):
+                self.assertEqual(result[y][x].id, expected_grid[y][x].id)
+
+        grid = [
+            [Wall(0, 0), Wall(1, 0), Wall(2, 0)],
+            [Wall(0, 1), Player(1, 1), Wall(2, 1)],
+            [Wall(0, 2), Wall(1, 2), Wall(2, 3)]
+        ]
+
+        expected_grid = [
+            [Wall(0, 0), Wall(1, 0), Wall(2, 0)],
+            [Wall(0, 1), Player(1, 1), Wall(2, 1)],
+            [Wall(0, 2), Wall(1, 2), Wall(2, 3)]
+        ]
+
+        result = self.board_2.apply_gravity(grid) # Deuxième cas testé
 
         for y in range(len(result)):
             for x in range(len(result[y])):
@@ -251,29 +281,29 @@ class BoardTests(unittest.TestCase):
             [Wall(0, 3), Wall(1, 3), Wall(2, 3), Wall(3, 3), Wall(4, 3)]
         ]
         expected_result = [[2, 1], [2, 2]]
-        result = self.board.moved_icone(old_grid, new_grid)
+        result = self.board_1.moved_icone(old_grid, new_grid)
         self.assertEqual(result, expected_result)
 
     def test_get_icone_coord(self):
-        x, y = self.board.get_icone_coord('@')
+        x, y = self.board_1.get_icone_coord('@')
         self.assertEqual(x, 1)
         self.assertEqual(y, 1)
 
     def test_is_valid_position(self):
         # Vérifier des positions valides
-        self.assertTrue(self.board.is_valid_position(2, 1))  # Position vide
-        self.assertTrue(self.board.is_valid_position(1, 2))  # Pièce
+        self.assertTrue(self.board_1.is_valid_position(2, 1))  # Position vide
+        self.assertTrue(self.board_1.is_valid_position(1, 2))  # Pièce
 
         # Vérifier des positions invalides
-        self.assertFalse(self.board.is_valid_position(-1, 2))  # Position en dehors du plateau (gauche)
-        self.assertFalse(self.board.is_valid_position(5, 2))  # Position en dehors du plateau (droite)
-        self.assertFalse(self.board.is_valid_position(2, -1))  # Position en dehors du plateau (haut)
-        self.assertFalse(self.board.is_valid_position(2, 4))  # Position en dehors du plateau (bas)
-        self.assertFalse(self.board.is_valid_position(0, 2))  # Position contenant un mur (non valide)
+        self.assertFalse(self.board_1.is_valid_position(-1, 2))  # Position en dehors du plateau (gauche)
+        self.assertFalse(self.board_1.is_valid_position(5, 2))  # Position en dehors du plateau (droite)
+        self.assertFalse(self.board_1.is_valid_position(2, -1))  # Position en dehors du plateau (haut)
+        self.assertFalse(self.board_1.is_valid_position(2, 4))  # Position en dehors du plateau (bas)
+        self.assertFalse(self.board_1.is_valid_position(0, 2))  # Position contenant un mur (non valide)
 
     def test_push_stone(self):
         # Vérifier un mouvement de pierre valide vers le bas
-        self.assertTrue(self.board.push_stone(1, 0))  # Pousser la pierre vers la droite
+        self.assertTrue(self.board_1.push_stone(1, 0))  # Pousser la pierre vers la droite
 
         expected_grid = [
             [Wall(0, 0), Wall(1, 0), Wall(2, 0), Wall(3, 0), Wall(4, 0)],
@@ -284,31 +314,31 @@ class BoardTests(unittest.TestCase):
 
         for y in range(len(expected_grid)):
             for x in range(len(expected_grid[y])):
-                self.assertEqual(self.board.grid[y][x].id, expected_grid[y][x].id)
+                self.assertEqual(self.board_1.grid[y][x].id, expected_grid[y][x].id)
 
         # Vérifier un mouvement de pierre non valide (vers le haut)
-        self.assertFalse(self.board.push_stone(0, -1))  # Tentative de pousser la pierre vers le haut
+        self.assertFalse(self.board_1.push_stone(0, -1))  # Tentative de pousser la pierre vers le haut
         for y in range(len(expected_grid)): # La grille ne doit pas avoir changé
             for x in range(len(expected_grid[y])):
-                self.assertEqual(self.board.grid[y][x].id, expected_grid[y][x].id)
+                self.assertEqual(self.board_1.grid[y][x].id, expected_grid[y][x].id)
 
         # Vérifier un mouvement de pierre non valide (vers la droite)
-        self.assertFalse(self.board.push_stone(1, 0))  # Tentative de pousser la pierre vers la droite
+        self.assertFalse(self.board_1.push_stone(1, 0))  # Tentative de pousser la pierre vers la droite
         for y in range(len(expected_grid)):  # La grille ne doit pas avoir changé
             for x in range(len(expected_grid[y])):
-                self.assertEqual(self.board.grid[y][x].id, expected_grid[y][x].id)
+                self.assertEqual(self.board_1.grid[y][x].id, expected_grid[y][x].id)
 
         # Vérifier un mouvement de pierre non valide (vers le bas, obstruction)
-        self.assertFalse(self.board.push_stone(0, 1))  # Tentative de pousser la pierre vers le bas (obstruction)
+        self.assertFalse(self.board_1.push_stone(0, 1))  # Tentative de pousser la pierre vers le bas (obstruction)
         for y in range(len(expected_grid)):  # La grille ne doit pas avoir changé
             for x in range(len(expected_grid[y])):
-                self.assertEqual(self.board.grid[y][x].id, expected_grid[y][x].id)
+                self.assertEqual(self.board_1.grid[y][x].id, expected_grid[y][x].id)
 
         # Vérifier un mouvement de pierre non valide (vers le bas, hors limites)
-        self.assertFalse(self.board.push_stone(0, 2))  # Tentative de pousser la pierre vers le bas (hors limites)
+        self.assertFalse(self.board_1.push_stone(0, 2))  # Tentative de pousser la pierre vers le bas (hors limites)
         for y in range(len(expected_grid)):  # La grille ne doit pas avoir changé
             for x in range(len(expected_grid[y])):
-                self.assertEqual(self.board.grid[y][x].id, expected_grid[y][x].id)
+                self.assertEqual(self.board_1.grid[y][x].id, expected_grid[y][x].id)
 
 
 if __name__ == "__main__":
