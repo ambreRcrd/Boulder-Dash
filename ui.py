@@ -30,7 +30,7 @@ def import_level(level_path):
     board.to_list_grid(grid)  # Affichage python de la grille
     return board, grid, board.player
 
-board, grid, bonhomme = import_level("level_test2.txt")
+board, grid, bonhomme = import_level("level_test.txt")
 text_input = pygame_textinput.TextInputManager
 
 
@@ -291,6 +291,7 @@ while running:
 
             if play_button.draw(screen):
                 pygame.mixer.music.unpause()
+                pygame.mixer.music.play(-1)
                 game_pause = False
                 screen.fill(background_color)
                 pause_end = pygame.time.get_ticks()
