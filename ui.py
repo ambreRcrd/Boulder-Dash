@@ -173,8 +173,8 @@ while running:
                         game_pause = False
                         pause_end = pygame.time.get_ticks()
                         paused_time += pause_end - pause_start
-                        start_time += paused_time
                         break
+            start_time += paused_time # Mettre à jour le temps de départ après la pause
 
             if not game_pause:
                 screen.fill(background_color)
@@ -183,7 +183,10 @@ while running:
             if play_button.draw(screen):
                 game_pause = False
                 screen.fill(background_color)
-                continue
+                pause_end = pygame.time.get_ticks()
+                paused_time += pause_end - pause_start
+                start_time += paused_time  # Mettre à jour le temps de départ après la pause
+                break
 
             if exit_button.draw(screen):
                 running = False
@@ -221,26 +224,23 @@ while running:
                     game_pause = True
                 elif event.key in moving_coord.keys():
                     move()
+                    grid = board.grid
 
         # Mettre à jour la grille
         grid[i_old_player_y][i_old_player_x] = Empty(i_old_player_x, i_old_player_y)
         grid[bonhomme.y][bonhomme.x] = Player(bonhomme.x, bonhomme.y)
+        board.grid = grid
 
         # Supprime le joueur de son ancienne position
         player_x, player_y = bonhomme.x * size_x, bonhomme.y * size_y
         erase_rect = pygame.Rect(old_player_x, old_player_y, size_x, size_y)
         screen.fill(background_color, erase_rect)
 
-        # Afficher l'image du personnage à sa nouvelle position
-        player_rect = pygame.Rect(player_x, player_y, size_x, size_y)
-        screen.fill(background_color, player_rect)
-        player = icons.get('@')
-        screen.blit(player, player_rect)
-
         # Apply gravity
         old_grid = copy.deepcopy(grid)
-        board.apply_gravity(grid)
+        grid = board.apply_gravity(old_grid)
         try_gravity(old_grid, grid)
+
         print_grid(grid)
         update_score()  # Affichage du score sur l'écran
         update_time()  # Affichage du temps restant

@@ -166,7 +166,6 @@ class Board:
         for y in range(nb_lignes):
             for x in range(nb_colonnes):
                 new_grid[y][x] = grid[y][x].id
-
         print(new_grid)
         return new_grid.tolist()
 
@@ -198,33 +197,17 @@ class Board:
 
         # Vérifier si la case suivante contient une pierre poussable
         if not isinstance(self.grid[new_y][new_x], Stone) or not self.grid[new_y][new_x].is_pushable:
-            print(new_y, new_x)
-            print(self.grid[new_y][new_x])
-            print(isinstance(self.grid[new_y][new_x], Stone), self.grid[new_y][new_x].is_pushable)
-            print(2)
             return False  # la case suivante ne contient pas de pierre poussable, retourner False
 
         # Vérifier si la case suivante après la pierre est valide
         new_stone_x = new_x + dx
         new_stone_y = new_y + dy
-        if not self.is_valid_position(new_stone_x, new_stone_y):
-            print(3)
-            return False  # la case suivante après la pierre n'est pas valide, retourner False
+        if not self.is_valid_position(new_stone_x, new_stone_y) or isinstance(self.grid[new_stone_y][new_stone_x], Stone) or isinstance(self.grid[new_stone_y][new_stone_x], Brick):
+            return False  # la case suivante après la pierre n'est pas valide ou est une pierre, retourner False
 
         # Pousser la pierre
-        self.grid[new_stone_y][new_stone_x] = self.grid[new_y][new_x]
-        self.grid[new_y][new_x] = Empty(new_y, new_x)
-
-        # Déplacer le joueur
-        self.grid[self.player.y][self.player.x] = Empty(self.player.x, self.player.y)  # effacer la case précédente du joueur
-        self.player.x = new_x
-        self.player.y = new_y
-        self.grid[self.player.y][self.player.x] = self.player  # placer le joueur sur la nouvelle case
-
-        # Si le joueur a collecté une pièce, l'ajouter à son inventaire
-        if isinstance(self.grid[self.player.y][self.player.x], Coin):
-            self.player.get_coin()
-            self.grid[self.player.y][self.player.x] = Empty(self.player.x, self.player.y)  # effacer la pièce de la case
+        self.grid[new_stone_y][new_stone_x] = Stone(new_stone_x, new_stone_y)
+        self.grid[new_y][new_x] = Empty(new_x, new_y)
 
         return True  # le mouvement est valide, retourner True
 
