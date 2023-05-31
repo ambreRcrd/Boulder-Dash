@@ -198,6 +198,9 @@ class Board:
 
         # Vérifier si la case suivante contient une pierre poussable
         if not isinstance(self.grid[new_y][new_x], Stone) or not self.grid[new_y][new_x].is_pushable:
+            print(new_y, new_x)
+            print(self.grid[new_y][new_x])
+            print(isinstance(self.grid[new_y][new_x], Stone), self.grid[new_y][new_x].is_pushable)
             print(2)
             return False  # la case suivante ne contient pas de pierre poussable, retourner False
 

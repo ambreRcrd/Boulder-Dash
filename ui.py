@@ -122,11 +122,10 @@ def move():
 
             elif not icone.is_solid:
                 bonhomme.update_position(new_x, new_y)
-                if icone.id == 'c':
+                if isinstance(icone, Coin):
                     bonhomme.get_coin()  # Le nombre de pièces ramassées est comptabilisé
                 moved = True
                 break
-
     return moved
 
 
