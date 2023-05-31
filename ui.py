@@ -2,13 +2,14 @@ from button import Button
 import copy
 import numpy as np
 import pygame
-
+import pygame_textinput
+import sqlite3
 from game import *
 
 
 '''Initialiser Pygame'''
 pygame.init()
-
+conn = sqlite3.connect('scores.accdb')
 
 '''Crée la fenêtre graphique'''
 screen_width, screen_height = 1000, 600 # Définir la taille de la fenêtre
@@ -29,6 +30,7 @@ def import_level(level_path):
 
 
 board, grid, bonhomme = import_level("level_test.txt")
+text_input = pygame_textinput.TextInputManager
 
 
 '''Icônes de la grille'''
@@ -53,6 +55,7 @@ i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y # Coordonnées indiciell
 
 
 '''Icônes du menu de pause'''
+titlescr = pygame.image.load("titlescreen.png")
 defeat_image = pygame.image.load("defeat.png")
 victory_image = pygame.image.load("victory.png")
 play_img = pygame.image.load("play_bouton.png").convert_alpha() #Chargement des images bouton
@@ -63,6 +66,13 @@ play_button = Button(300, 125, play_img, 1) #Création boutons du menu pause
 replay_button = Button(300, 250, replay_img, 1)
 exit_button = Button(300, 375, exit_img, 1)
 defeat_button = Button(346, 460, exit_img, 1)
+
+#Init stockage scores
+cursor = conn.cursor()
+cursor.execute('''CREATE TABLE IF NOT EXISTS scores
+                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   name TEXT,
+                   time INTEGER)''')
 
 
 def print_grid(grid):
@@ -163,10 +173,11 @@ def level_up(levelnumber,levelpath2,levelpath3):
 running = True # Le jeu tourne
 game_pause = False # Le jeu n'est pas mis en pause
 game_defeat = False
+starter = False
 
 levelnumber = 1
 game_time = 0 # Initialisation du temps
-game_time_limit = 110 # Temps de jeu
+game_time_limit = 150 # Temps de jeu
 start_time = pygame.time.get_ticks() # Temps courant
 pygame.mixer.music.load("boulder_sound.mp3")    # Charger la musique
 coin_sound = pygame.mixer.Sound("coin.wav")
@@ -179,6 +190,57 @@ pygame.mixer.music.play(-1)     # Jouer la musique en boucle
 
 '''Boucle principale du jeu'''
 while running:
+    if not starter:
+        paused_time = 0
+        pause_start = pygame.time.get_ticks()
+        base_font = pygame.font.Font(None, 32)
+        user_text = ''
+        input_rect = pygame.Rect(430, 500, 300, 30)
+        color_passive = pygame.Color((50, 50, 50))
+        color = color_passive
+        while not starter:
+            for event in pygame.event.get():
+
+                # if user types QUIT then the screen will close
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                if event.type == pygame.KEYDOWN:
+
+                    # Check for backspace
+                    if event.key == pygame.K_BACKSPACE:
+
+                        # get text input from 0 to -1 i.e. end.
+                        user_text = user_text[:-1]
+
+                    # Unicode standard is used for string
+                    # formation
+                    else:
+                        user_text += event.unicode
+                    if event.key == pygame.K_RETURN:
+                        starter = True
+
+                    # it will set background color of screen
+                screen.blit(titlescr, (0, 0))
+                # draw rectangle and argument passed which should
+                # be on screen
+                pygame.draw.rect(screen, color, input_rect)
+
+                text_surface = base_font.render(user_text, True, (255, 255, 255))
+
+                # render at position stated in arguments
+                screen.blit(text_surface, (input_rect.x + 5, input_rect.y + 5))
+
+                # set width of textfield so that text cannot get
+                # outside of user's text input
+                input_rect.w = max(100, text_surface.get_width() + 10)
+
+                # display.flip() will update only a portion of the
+                # screen to updated, not full area
+                pygame.display.flip()
+        screen.fill(background_color)
+        pause_end = pygame.time.get_ticks()
+        paused_time += pause_end - pause_start
+        start_time += paused_time
     if game_pause:
         # Boucle de pause
         pygame.mixer.music.pause()
@@ -226,6 +288,7 @@ while running:
                 pygame.mixer.music.rewind()
                 pygame.mixer.music.play(-1)
                 game_pause = False
+                levelnumber = 1
                 screen.fill(background_color)
                 movement_variables()  # Réinitialisation des variables de mouvement
 
@@ -276,13 +339,23 @@ while running:
         elif grid[bonhomme.y][bonhomme.x].id == 't':
             if levelnumber == 3:
                 pygame.mixer.music.pause()
-                victory_sound.play()
+                if bonhomme.coins == 19:
+                    victory_sound.play()
+                else:
+                    death_sound.play()
                 while running:
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
                             running = False  # Quitter la boucle si l'utilisateur ferme la fenêtre
                     screen.fill((0, 0, 0))
-                    screen.blit(victory_image, (0, 0))
+                    if bonhomme.coins == 19:
+                        pseudo = user_text
+                        temps = game_time  # Récupérez le temps du joueur depuis votre code existant
+                        cursor.execute('INSERT INTO scores (name, time) VALUES (?, ?)', (pseudo, temps))
+                        conn.commit()
+                        screen.blit(victory_image, (0, 0))
+                    else:
+                        screen.blit(defeat_image, (0, 0))
                     if defeat_button.draw(screen):
                         running = False
                         game_pause = False
@@ -330,3 +403,4 @@ while running:
         pygame.display.flip()  # Rafraîchir l'écran
 
 pygame.quit()  # Quitter Pygame
+conn.close()
