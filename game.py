@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 import unittest
 
@@ -10,6 +11,15 @@ class Wall:
         self.y = y
         self.id = 'w'
         self.is_solid = True
+        self.is_gravity_affected = False
+        self.is_pushable = False
+
+class Trap:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.id = 't'
+        self.is_solid = False # la piece n'est pas solide et peut être traversée
         self.is_gravity_affected = False
         self.is_pushable = False
 
@@ -82,6 +92,7 @@ class Board:
             'w': Wall,
             's': Stone,
             'c': Coin,
+            't': Trap,
             ' ': Empty
         }
         self.grid = self.create_grid()
@@ -92,7 +103,10 @@ class Board:
     #    '''Applique la gravité à la grille courante'''
     #    new_grid = [row[:] for row in grid]  # Créer une copie de la grille originale
 #
-    #    for y in range(len(new_grid) - 2, -1, -1):  # Commencer à l'index y = len(new_grid) - 2
+    #    def gravity_helper(y):
+    #        if y >= len(new_grid) - 1:
+    #            return
+#
     #        for x in range(len(new_grid[0])):
     #            # Si la case contient une pierre
     #            if new_grid[y][x].is_gravity_affected:
@@ -104,36 +118,15 @@ class Board:
     #                    new_grid[y + 1][x] = class_corres(x, y + 1)
     #                    new_grid[y][x] = Empty(x, y)
 #
-    #    # Vérifier si d'autres éléments peuvent tomber après le premier passage
-    #    has_fallen = True
-    #    while has_fallen:
-    #        has_fallen = False
-    #        for y in range(len(new_grid) - 2, -1, -1):  # Commencer à l'index y = len(new_grid) - 2
-    #            for x in range(len(new_grid[0])):
-    #                # Si la case contient une pierre
-    #                if new_grid[y][x].is_gravity_affected:
-    #                    # Si la case en dessous est vide
-    #                    if new_grid[y + 1][x].id == " ":
-    #                        # La pierre tombe d'une case
-    #                        icone = new_grid[y][x].id
-    #                        class_corres = self.class_correspondings[icone]
-    #                        new_grid[y + 1][x] = class_corres(x, y + 1)
-    #                        new_grid[y][x] = Empty(x, y)
-    #                        has_fallen = True
-    #                        break
-    #            if has_fallen:
-    #                break
+    #        gravity_helper(y + 1)
 #
+    #    gravity_helper(0)
     #    return new_grid
 
     def apply_gravity(self, grid):
-        '''Applique la gravité à la grille courante'''
         new_grid = [row[:] for row in grid]  # Créer une copie de la grille originale
 
-        def gravity_helper(y):
-            if y >= len(new_grid) - 1:
-                return
-
+        for y in range(len(new_grid) - 1, -1, -1):
             for x in range(len(new_grid[0])):
                 # Si la case contient une pierre
                 if new_grid[y][x].is_gravity_affected:
@@ -144,10 +137,8 @@ class Board:
                         class_corres = self.class_correspondings[icone]
                         new_grid[y + 1][x] = class_corres(x, y + 1)
                         new_grid[y][x] = Empty(x, y)
-
-            gravity_helper(y + 1)
-
-        gravity_helper(0)
+                        # Si la pierre est tombée, on vérifie si elle peut encore tomber
+                        self.apply_gravity(new_grid)  # Réappliquer la gravité à la nouvelle grille
         return new_grid
 
 
