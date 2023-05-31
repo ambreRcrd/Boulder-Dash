@@ -37,6 +37,7 @@ icon_paths = {
     'w': 'wall.png',
     's': 'stone.png',
     'c': 'coin.png',
+    't': 'trap.png',
 }
 
 nb_lignes, nb_colonnes = len(grid), len(grid[0])
@@ -51,6 +52,7 @@ i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y # Coordonnées indiciell
 
 
 '''Icônes du menu de pause'''
+defeat_image = pygame.image.load("defeat.png")
 play_img = pygame.image.load("play_bouton.png").convert_alpha() #Chargement des images bouton
 replay_img = pygame.image.load("replay_bouton.png").convert_alpha()
 exit_img = pygame.image.load("exit_bouton.png").convert_alpha()
@@ -58,6 +60,7 @@ exit_img = pygame.image.load("exit_bouton.png").convert_alpha()
 play_button = Button(300, 125, play_img, 1) #Création boutons du menu pause
 replay_button = Button(300, 250, replay_img, 1)
 exit_button = Button(300, 375, exit_img, 1)
+defeat_button = Button(346, 460, exit_img, 1)
 
 
 def print_grid(grid):
@@ -122,10 +125,11 @@ def move():
 
             elif not icone.is_solid:
                 bonhomme.update_position(new_x, new_y)
-                if isinstance(icone, Coin):
+                if icone.id == 'c':
                     bonhomme.get_coin()  # Le nombre de pièces ramassées est comptabilisé
                 moved = True
                 break
+
     return moved
 
 
@@ -150,16 +154,25 @@ def update_time():
 '''Initialisations'''
 running = True # Le jeu tourne
 game_pause = False # Le jeu n'est pas mis en pause
+game_defeat = False
 
 game_time = 0 # Initialisation du temps
 game_time_limit = 110 # Temps de jeu
 start_time = pygame.time.get_ticks() # Temps courant
+pygame.mixer.music.load("boulder_sound.mp3")    # Charger la musique
+coin_sound = pygame.mixer.Sound("coin.wav")
+brick_sound = pygame.mixer.Sound("brick.wav")
+victory_sound = pygame.mixer.Sound("victory.wav")
+trap_sound = pygame.mixer.Sound("trap.wav")
+death_sound = pygame.mixer.Sound("death.wav")
+pygame.mixer.music.play(-1)     # Jouer la musique en boucle
 
 
 '''Boucle principale du jeu'''
 while running:
     if game_pause:
         # Boucle de pause
+        pygame.mixer.music.pause()
         pause_start = pygame.time.get_ticks()
         paused_time = 0
         while game_pause:
@@ -181,6 +194,7 @@ while running:
                 continue
 
             if play_button.draw(screen):
+                pygame.mixer.music.unpause()
                 game_pause = False
                 screen.fill(background_color)
                 pause_end = pygame.time.get_ticks()
@@ -200,6 +214,8 @@ while running:
                 i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
                 print_grid(grid)
                 start_time = pygame.time.get_ticks()
+                pygame.mixer.music.rewind()
+                pygame.mixer.music.play(-1)
                 game_pause = False
                 screen.fill(background_color)
                 movement_variables()  # Réinitialisation des variables de mouvement
@@ -208,7 +224,7 @@ while running:
     else:
         game_time = (pygame.time.get_ticks() - start_time) // 1000  # Calcul du temps en secondes écoulé depuis le début du jeu
         if game_time >= game_time_limit: # Vérification si le temps imparti est écoulé
-            running = False
+            game_defeat=True
 
         # Apply gravity
         old_grid = copy.deepcopy(grid)
@@ -226,8 +242,35 @@ while running:
                     move()
                     grid = board.grid
 
+        if game_defeat == True:     #si le joueur perd
+            screen.fill((0, 0, 0))
+            pygame.display.update()
+            screen.blit(defeat_image, (0, 0))
+            if defeat_button.draw(screen):
+                running = False
+
         # Mettre à jour la grille
         grid[i_old_player_y][i_old_player_x] = Empty(i_old_player_x, i_old_player_y)
+        if grid[bonhomme.y][bonhomme.x].id == 'c':
+            coin_sound.play()
+        elif grid[bonhomme.y][bonhomme.x].id == 'b':
+            brick_sound.play()
+        elif grid[bonhomme.y][bonhomme.x].id == 't':
+            goldcoins = bonhomme.coins
+            timebtrap = game_time
+            trap_sound.play()
+            board, grid, bonhomme = import_level("level_test2.txt")
+            player_x, player_y = bonhomme.x * size_x, bonhomme.y * size_y
+            old_player_x, old_player_y = player_x, player_y
+            i_old_player_x, i_old_player_y = bonhomme.x, bonhomme.y
+            print_grid(grid)
+            start_time = timebtrap
+            bonhomme.coins = goldcoins
+            game_pause = False
+            screen.fill(background_color)
+            movement_variables()  # Réinitialisation des variables de mouvement
+
+
         grid[bonhomme.y][bonhomme.x] = Player(bonhomme.x, bonhomme.y)
         board.grid = grid
 

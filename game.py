@@ -13,6 +13,15 @@ class Wall:
         self.is_gravity_affected = False
         self.is_pushable = False
 
+class Trap:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.id = 't'
+        self.is_solid = False # la piece n'est pas solide et peut être traversée
+        self.is_gravity_affected = False
+        self.is_pushable = False
+
 class Coin:
     def __init__(self, x, y):
         self.x = x
@@ -82,6 +91,7 @@ class Board:
             'w': Wall,
             's': Stone,
             'c': Coin,
+            't': Trap,
             ' ': Empty
         }
         self.grid = self.create_grid()
