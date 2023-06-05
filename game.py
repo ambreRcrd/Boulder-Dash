@@ -185,7 +185,7 @@ class Board:
 
         new_stone_x = new_x + dx
         new_stone_y = new_y + dy
-        if not self.is_valid_position(new_stone_x, new_stone_y) or isinstance(self.grid[new_stone_y][new_stone_x], Stone): # Vérifier si la case suivante après la pierre est valide
+        if not self.is_valid_position(new_stone_x, new_stone_y) or isinstance(self.grid[new_stone_y][new_stone_x], Stone) or isinstance(self.grid[new_stone_y][new_stone_x], Brick): # Vérifier si la case suivante après la pierre est valide
             return False  # La case suivante après la pierre n'est pas valide, retourner False
 
         self.grid[new_stone_y][new_stone_x] = Stone(new_stone_x, new_stone_y) # Pousser la pierre
